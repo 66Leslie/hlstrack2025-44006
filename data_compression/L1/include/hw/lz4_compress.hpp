@@ -291,10 +291,10 @@ static void lz4Compress(hls::stream<ap_uint<32> >& inStream,
     hls::stream<uint8_t> lit_outStream("lit_outStream");
     hls::stream<ap_uint<64> > lenOffset_Stream("lenOffset_Stream");
 
-#pragma HLS STREAM variable = lit_outStream depth = MAX_LIT_COUNT
-#pragma HLS STREAM variable = lenOffset_Stream depth = c_gmemBurstSize
+#pragma HLS STREAM variable = lit_outStream depth = (MAX_LIT_COUNT > 64 ? MAX_LIT_COUNT : 64)
+#pragma HLS STREAM variable = lenOffset_Stream depth = (c_gmemBurstSize * 4)
 
-#pragma HLS BIND_STORAGE variable = lenOffset_Stream type = FIFO impl = SRL
+#pragma HLS BIND_STORAGE variable = lenOffset_Stream type = FIFO impl = BRAM
 
 #pragma HLS dataflow
     details::lz4CompressPart1<MAX_LIT_COUNT, PARALLEL_UNITS>(inStream, lit_outStream, lenOffset_Stream, input_size,
@@ -323,12 +323,12 @@ void hlsLz4Core(hls::stream<data_t>& inStream,
     hls::stream<ap_uint<32> > compressdStream("compressdStream");
     hls::stream<ap_uint<32> > bestMatchStream("bestMatchStream");
     hls::stream<ap_uint<32> > boosterStream("boosterStream");
-#pragma HLS STREAM variable = compressdStream depth = 8
-#pragma HLS STREAM variable = bestMatchStream depth = 8
-#pragma HLS STREAM variable = boosterStream depth = 8
+#pragma HLS STREAM variable = compressdStream depth = 32
+#pragma HLS STREAM variable = bestMatchStream depth = 32
+#pragma HLS STREAM variable = boosterStream depth = 32
 
-#pragma HLS BIND_STORAGE variable = compressdStream type = FIFO impl = SRL
-#pragma HLS BIND_STORAGE variable = boosterStream type = FIFO impl = SRL
+#pragma HLS BIND_STORAGE variable = compressdStream type = FIFO impl = BRAM
+#pragma HLS BIND_STORAGE variable = boosterStream type = FIFO impl = BRAM
 
 #pragma HLS dataflow
     xf::compression::lzCompress<M_LEN, MIN_MAT, LZ_MAX_OFFSET_LIM>(inStream, compressdStream, input_size);
@@ -359,13 +359,13 @@ void hlsLz4(const data_t* in,
     hls::stream<ap_uint<8> > inStream[NUM_BLOCK];
     hls::stream<bool> outStreamEos[NUM_BLOCK];
     hls::stream<ap_uint<8> > outStream[NUM_BLOCK];
-#pragma HLS STREAM variable = outStreamEos depth = 2
-#pragma HLS STREAM variable = inStream depth = c_gmemBurstSize
-#pragma HLS STREAM variable = outStream depth = c_gmemBurstSize
+#pragma HLS STREAM variable = outStreamEos depth = 4
+#pragma HLS STREAM variable = inStream depth = (c_gmemBurstSize * 4)
+#pragma HLS STREAM variable = outStream depth = (c_gmemBurstSize * 4)
 
 #pragma HLS BIND_STORAGE variable = outStreamEos type = FIFO impl = SRL
-#pragma HLS BIND_STORAGE variable = inStream type = FIFO impl = SRL
-#pragma HLS BIND_STORAGE variable = outStream type = FIFO impl = SRL
+#pragma HLS BIND_STORAGE variable = inStream type = FIFO impl = BRAM
+#pragma HLS BIND_STORAGE variable = outStream type = FIFO impl = BRAM
 
     hls::stream<uint32_t> compressedSize[NUM_BLOCK];
 

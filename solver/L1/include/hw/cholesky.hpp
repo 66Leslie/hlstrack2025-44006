@@ -49,8 +49,12 @@ struct choleskyTraits {
     typedef InputType RECIP_DIAG_T;
     typedef InputType OFF_DIAG_T;
     typedef OutputType L_OUTPUT_T;
+#ifdef SEL_ARCH
+    static const int ARCH = SEL_ARCH; // Select implementation via external macro when provided
+#else
     static const int ARCH =
         1; // Select implementation: 0=Basic, 1=Lower latency architecture, 2=Further improved latency architecture
+#endif
     static const int INNER_II = 1; // Specify the pipelining target for the inner loop
     static const int UNROLL_FACTOR =
         1; // Specify the inner loop unrolling factor for the choleskyAlt2 architecture(2) to increase throughput
@@ -69,7 +73,11 @@ struct choleskyTraits<LowerTriangularL, RowsColsA, hls::x_complex<InputBaseType>
     typedef InputBaseType RECIP_DIAG_T;
     typedef hls::x_complex<InputBaseType> OFF_DIAG_T;
     typedef hls::x_complex<OutputBaseType> L_OUTPUT_T;
+#ifdef SEL_ARCH
+    static const int ARCH = SEL_ARCH;
+#else
     static const int ARCH = 1;
+#endif
     static const int INNER_II = 1;
     static const int UNROLL_FACTOR = 1;
     static const int UNROLL_DIM = (LowerTriangularL == true ? 1 : 2);
@@ -86,7 +94,11 @@ struct choleskyTraits<LowerTriangularL, RowsColsA, std::complex<InputBaseType>, 
     typedef InputBaseType RECIP_DIAG_T;
     typedef std::complex<InputBaseType> OFF_DIAG_T;
     typedef std::complex<OutputBaseType> L_OUTPUT_T;
+#ifdef SEL_ARCH
+    static const int ARCH = SEL_ARCH;
+#else
     static const int ARCH = 1;
+#endif
     static const int INNER_II = 1;
     static const int UNROLL_FACTOR = 1;
     static const int UNROLL_DIM = (LowerTriangularL == true ? 1 : 2);
@@ -120,7 +132,11 @@ struct choleskyTraits<LowerTriangularL, RowsColsA, ap_fixed<W1, I1, Q1, O1, N1>,
     typedef ap_fixed<2 + (W2 - I2) + W2, 2 + (W2 - I2), AP_RND_CONV, AP_SAT, 0> RECIP_DIAG_T;
     typedef ap_fixed<W2, I2, AP_RND_CONV, AP_SAT, 0>
         L_OUTPUT_T; // Takes new L value.  Same as L output but saturation set
+#ifdef SEL_ARCH
+    static const int ARCH = SEL_ARCH;
+#else
     static const int ARCH = 1;
+#endif
     static const int INNER_II = 1;
     static const int UNROLL_FACTOR = 1;
     static const int UNROLL_DIM = (LowerTriangularL == true ? 1 : 2);
@@ -157,7 +173,11 @@ struct choleskyTraits<LowerTriangularL,
     typedef ap_fixed<2 + (W2 - I2) + W2, 2 + (W2 - I2), AP_RND_CONV, AP_SAT, 0> RECIP_DIAG_T;
     typedef hls::x_complex<ap_fixed<W2, I2, AP_RND_CONV, AP_SAT, 0> >
         L_OUTPUT_T; // Takes new L value.  Same as L output but saturation set
+#ifdef SEL_ARCH
+    static const int ARCH = SEL_ARCH;
+#else
     static const int ARCH = 1;
+#endif
     static const int INNER_II = 1;
     static const int UNROLL_FACTOR = 1;
     static const int UNROLL_DIM = (LowerTriangularL == true ? 1 : 2);
@@ -299,6 +319,7 @@ int choleskyBasic(const InputType A[RowsColsA][RowsColsA], OutputType L[RowsCols
     // fixed point.
     typename CholeskyTraits::PROD_T prod;
     typename CholeskyTraits::ACCUM_T sum[RowsColsA];
+#pragma HLS ARRAY_PARTITION variable = sum complete dim = 1
     typename CholeskyTraits::ACCUM_T A_cast_to_sum;    // A with the same dimensions as sum.
     typename CholeskyTraits::ACCUM_T prod_cast_to_sum; // prod with the same dimensions as sum.
 
@@ -313,6 +334,11 @@ int choleskyBasic(const InputType A[RowsColsA][RowsColsA], OutputType L[RowsCols
     // NOTE: The internal matrix only needs to be triangular but optimization using a 1-D array it will require addition
     // logic to generate the indexes. Refer to the choleskyAlt function.
     OutputType L_internal[RowsColsA][RowsColsA];
+#pragma HLS ARRAY_PARTITION variable = L_internal complete dim = 1
+#pragma HLS ARRAY_PARTITION variable = L_internal complete dim = 2
+    
+    // Precomputed reciprocal of current diagonal (real), reused within a column
+    typename CholeskyTraits::RECIP_DIAG_T L_diag_recip_current;
 
 col_loop:
     for (int j = 0; j < RowsColsA; j++) {
@@ -321,13 +347,15 @@ col_loop:
     // Calculate the diagonal value for this column
     diag_loop:
         for (int k = 0; k < RowsColsA; k++) {
+#pragma HLS PIPELINE II = CholeskyTraits::INNER_II
             if (k <= (j - 1)) {
                 if (LowerTriangularL == true) {
                     retrieved_L = L_internal[j][k];
                 } else {
                     retrieved_L = L_internal[k][j];
                 }
-                sum[j] = hls::x_conj(retrieved_L) * retrieved_L;
+                // accumulate previous terms toward diagonal square sum
+                sum[j] += hls::x_conj(retrieved_L) * retrieved_L;
             }
         }
         A_cast_to_sum = A[j][j];
@@ -343,6 +371,12 @@ col_loop:
 
         // Round to target format using method specifed by traits defined types.
         new_L = new_L_diag;
+
+        // Precompute reciprocal diagonal using rsqrt of (A_minus_sum) real part, avoiding divides later
+        {
+            typename CholeskyTraits::DIAG_T A_minus_sum_cast_diag = A_minus_sum;
+            cholesky_rsqrt(hls::x_real(A_minus_sum_cast_diag), L_diag_recip_current);
+        }
 
         if (LowerTriangularL == true) {
             L_internal[j][j] = new_L;
@@ -362,9 +396,11 @@ col_loop:
                     sum[j] = hls::x_conj(A[j][i]);
                 }
 
-            sum_loop:
-                for (int k = 0; k < RowsColsA; k++) {
+        sum_loop:
+            for (int k = 0; k < RowsColsA; k++) {
 #pragma HLS PIPELINE II = CholeskyTraits::INNER_II
+#pragma HLS UNROLL factor = 2
+//#pragma HLS DEPENDENCE variable = L_internal inter false
                     if (k <= (j - 1)) {
                         if (LowerTriangularL == true) {
                             prod = -L_internal[i][k] * hls::x_conj(L_internal[j][k]);
@@ -379,10 +415,9 @@ col_loop:
 
                 new_L_off_diag = sum[j];
 
-                L_cast_to_new_L_off_diag = L_internal[j][j];
-
-                // Diagonal is always real, avoid complex division
-                new_L_off_diag = new_L_off_diag / hls::x_real(L_cast_to_new_L_off_diag);
+            // Diagonal is always real, replace complex division by real with multiply by reciprocal
+            // new_L_off_diag = new_L_off_diag / hls::x_real(L_cast_to_new_L_off_diag);
+            cholesky_prod_sum_mult(new_L_off_diag, L_diag_recip_current, new_L_off_diag);
 
                 // Round to target format using method specifed by traits defined types.
                 new_L = new_L_off_diag;

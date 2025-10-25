@@ -73,7 +73,7 @@ void lzCompress(hls::stream<ap_uint<8> >& inStream, hls::stream<ap_uint<32> >& o
 dict_flush:
     for (int i = 0; i < LZ_DICT_SIZE; i++) {
 #pragma HLS PIPELINE II = 1
-#pragma HLS UNROLL FACTOR = 2
+#pragma HLS UNROLL FACTOR = 4
         dict[i] = resetValue;
     }
 
@@ -234,7 +234,7 @@ void lzCompress(hls::stream<IntVectorStream_dt<8, 1> >& inStream, hls::stream<In
         dict_flush:
             for (int i = 0; i < LZ_DICT_SIZE; i++) {
 #pragma HLS PIPELINE II = 1
-#pragma HLS UNROLL FACTOR = 2
+#pragma HLS UNROLL FACTOR = 4
                 dict[i] = resetValue;
             }
             resetDictFlag = false;

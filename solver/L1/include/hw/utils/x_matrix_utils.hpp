@@ -85,7 +85,8 @@ static double x_sqrt(double x) {
 }
 template <int W1, int I1, ap_q_mode Q1, ap_o_mode O1, int N1>
 ap_fixed<W1, I1, Q1, O1, N1> x_sqrt(ap_fixed<W1, I1, Q1, O1, N1> x) {
-    return hls::sqrt((double)x);
+    // Use single-precision sqrt to reduce latency, then cast back to fixed-point
+    return hls::sqrtf((float)x);
 }
 
 // copysign

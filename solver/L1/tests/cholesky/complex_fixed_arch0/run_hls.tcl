@@ -27,13 +27,13 @@ set PROJ "cholesky_test.prj"
 set SOLN "sol1"
 
 if {![info exists CLKP]} {
-  set CLKP 7.0
+  set CLKP 5.9
 }
 
 open_project -reset $PROJ
 
-add_files "${XF_PROJ_ROOT}/L1/tests/cholesky/kernel/kernel_cholesky_0.cpp" -cflags "-DMATRIX_DIM=3 -DMATRIX_LOWER_TRIANGULAR=0 -DSEL_ARCH=0 -D_DATA_PATH=${XF_PROJ_ROOT}/L1/tests/cholesky/datas/ -I./ -I${XF_PROJ_ROOT}/L1/tests/cholesky/host/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/kernel/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/ -I${XF_PROJ_ROOT}/L1/tests/ -I${XF_PROJ_ROOT}/L1/include/ -I${XF_PROJ_ROOT}/L1/include/hw -I${XF_PROJ_ROOT}/L2/include -I${XF_PROJ_ROOT}/../utils/L1/include/"
-add_files -tb "${XF_PROJ_ROOT}/L1/tests/cholesky/host/test_cholesky.cpp" -cflags "-DMATRIX_DIM=3 -DMATRIX_LOWER_TRIANGULAR=0 -DSEL_ARCH=0 -D_DATA_PATH=${XF_PROJ_ROOT}/L1/tests/cholesky/datas/ -I./ -I${XF_PROJ_ROOT}/L1/tests/cholesky/host/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/kernel/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/ -I${XF_PROJ_ROOT}/L1/tests/ -I${XF_PROJ_ROOT}/L1/include/ -I${XF_PROJ_ROOT}/L1/include/hw -I ./host -I${XF_PROJ_ROOT}/../utils/L1/include/"
+add_files "${XF_PROJ_ROOT}/L1/tests/cholesky/kernel/kernel_cholesky_0.cpp" -cflags "-DMATRIX_DIM=3 -DMATRIX_LOWER_TRIANGULAR=0 -DSEL_ARCH=1 -D_DATA_PATH=${XF_PROJ_ROOT}/L1/tests/cholesky/datas/ -I./ -I${XF_PROJ_ROOT}/L1/tests/cholesky/host/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/kernel/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/ -I${XF_PROJ_ROOT}/L1/tests/ -I${XF_PROJ_ROOT}/L1/include/ -I${XF_PROJ_ROOT}/L1/include/hw -I${XF_PROJ_ROOT}/L2/include -I${XF_PROJ_ROOT}/../utils/L1/include/"
+add_files -tb "${XF_PROJ_ROOT}/L1/tests/cholesky/host/test_cholesky.cpp" -cflags "-DMATRIX_DIM=3 -DMATRIX_LOWER_TRIANGULAR=0 -DSEL_ARCH=1 -D_DATA_PATH=${XF_PROJ_ROOT}/L1/tests/cholesky/datas/ -I./ -I${XF_PROJ_ROOT}/L1/tests/cholesky/host/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/kernel/ -I${XF_PROJ_ROOT}/L1/tests/cholesky/ -I${XF_PROJ_ROOT}/L1/tests/ -I${XF_PROJ_ROOT}/L1/include/ -I${XF_PROJ_ROOT}/L1/include/hw -I ./host -I${XF_PROJ_ROOT}/../utils/L1/include/"
 set_top kernel_cholesky_0
 
 open_solution -reset $SOLN

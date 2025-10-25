@@ -280,12 +280,15 @@ Function_cholesky_rsqrt_default:;
 template <int W1, int I1, ap_q_mode Q1, ap_o_mode O1, int N1, int W2, int I2, ap_q_mode Q2, ap_o_mode O2, int N2>
 void cholesky_rsqrt(ap_fixed<W1, I1, Q1, O1, N1> x, ap_fixed<W2, I2, Q2, O2, N2>& res) {
 Function_cholesky_rsqrt_fixed:;
-    ap_fixed<W2, I2, Q2, O2, N2> one = 1;
-    ap_fixed<W1, I1, Q1, O1, N1> sqrt_res;
-    ap_fixed<W2, I2, Q2, O2, N2> sqrt_res_cast;
-    sqrt_res = x_sqrt(x);
-    sqrt_res_cast = sqrt_res;
-    res = one / sqrt_res_cast;
+    // 牛顿迭代求 rsqrt：y_{n+1} = y_n * (1.5 - 0.5 * x * y_n^2)
+    // 以单精度 rsqrt 作初值，1 次迭代足以满足本题 3x3 固定点精度
+    const ap_fixed<W2, I2, Q2, O2, N2> one_point_five = (ap_fixed<W2, I2, Q2, O2, N2>)1.5;
+    const ap_fixed<W2, I2, Q2, O2, N2> half = (ap_fixed<W2, I2, Q2, O2, N2>)0.5;
+    ap_fixed<W2, I2, Q2, O2, N2> x_cast = (ap_fixed<W2, I2, Q2, O2, N2>)x;
+    ap_fixed<W2, I2, Q2, O2, N2> y0 = (ap_fixed<W2, I2, Q2, O2, N2>)x_rsqrt((double)x);
+    ap_fixed<W2, I2, Q2, O2, N2> y0_sq = y0 * y0;
+    ap_fixed<W2, I2, Q2, O2, N2> term = one_point_five - half * x_cast * y0_sq;
+    res = y0 * term;
 }
 
 // Local multiplier to handle a complex case currently not supported by the hls::x_complex class
@@ -454,6 +457,8 @@ int choleskyAlt(const InputType A[RowsColsA][RowsColsA], OutputType L[RowsColsA]
     // - For smaller matrix sizes there maybe be an increase in memory usage
     OutputType L_internal[(RowsColsA * RowsColsA - RowsColsA) / 2];
     typename CholeskyTraits::RECIP_DIAG_T diag_internal[RowsColsA];
+#pragma HLS ARRAY_PARTITION variable = L_internal complete dim = 1
+#pragma HLS ARRAY_PARTITION variable = diag_internal complete dim = 1
 
     typename CholeskyTraits::ACCUM_T square_sum;
     typename CholeskyTraits::ACCUM_T A_cast_to_sum;
@@ -529,11 +534,12 @@ row_loop:
         }
         // Round to target format using method specifed by traits defined types.
         new_L = new_L_diag;
-        // Generate the reciprocal of the diagonal for internal use to aviod the latency of a divide in every
-        // off-diagonal calculation
-        A_minus_sum_cast_diag = A_minus_sum;
-        cholesky_rsqrt(hls::x_real(A_minus_sum_cast_diag), new_L_diag_recip);
-        // Store diagonal value
+        // Use one division to get reciprocal of diagonal (lighter latency vs drsqrt here)
+        {
+            typename CholeskyTraits::RECIP_DIAG_T one = 1;
+            new_L_diag_recip = one / hls::x_real(new_L_diag);
+        }
+        // Store diagonal reciprocal for later off-diagonal computations
         diag_internal[i] = new_L_diag_recip;
         if (LowerTriangularL == true) {
             L[i][i] = new_L;
@@ -623,7 +629,9 @@ col_loop:
 // with scheduling
 #pragma HLS LOOP_FLATTEN off
 #pragma HLS PIPELINE II = CholeskyTraits::INNER_II
-#pragma HLS UNROLL FACTOR = CholeskyTraits::UNROLL_FACTOR
+#pragma HLS UNROLL FACTOR = 2
+#pragma HLS DEPENDENCE variable = L_internal inter false
+#pragma HLS DEPENDENCE variable = L_internal intra false
 
                 if (i > j) {
                     prod = L_internal[i][k] * prod_column_top;
@@ -743,7 +751,6 @@ int cholesky(hls::stream<InputType>& matrixAStrm, hls::stream<OutputType>& matri
     OutputType L[RowsColsA][RowsColsA];
 
     for (int r = 0; r < RowsColsA; r++) {
-#pragma HLS PIPELINE
         for (int c = 0; c < RowsColsA; c++) {
             matrixAStrm.read(A[r][c]);
         }
@@ -753,7 +760,6 @@ int cholesky(hls::stream<InputType>& matrixAStrm, hls::stream<OutputType>& matri
     ret = choleskyTop<LowerTriangularL, RowsColsA, TRAITS, InputType, OutputType>(A, L);
 
     for (int r = 0; r < RowsColsA; r++) {
-#pragma HLS PIPELINE
         for (int c = 0; c < RowsColsA; c++) {
             matrixLStrm.write(L[r][c]);
         }

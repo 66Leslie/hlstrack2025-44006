@@ -291,9 +291,10 @@ static void lz4Compress(hls::stream<ap_uint<32> >& inStream,
     hls::stream<uint8_t> lit_outStream("lit_outStream");
     hls::stream<ap_uint<64> > lenOffset_Stream("lenOffset_Stream");
 
-#pragma HLS STREAM variable = lit_outStream depth = (MAX_LIT_COUNT > 64 ? MAX_LIT_COUNT : 64)
-#pragma HLS STREAM variable = lenOffset_Stream depth = (c_gmemBurstSize * 4)
+#pragma HLS STREAM variable = lit_outStream depth = 512
+#pragma HLS STREAM variable = lenOffset_Stream depth = 256
 
+#pragma HLS BIND_STORAGE variable = lit_outStream type = FIFO impl = BRAM
 #pragma HLS BIND_STORAGE variable = lenOffset_Stream type = FIFO impl = BRAM
 
 #pragma HLS dataflow

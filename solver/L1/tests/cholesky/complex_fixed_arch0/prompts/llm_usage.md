@@ -3,25 +3,27 @@
 ## 基本信息
 
 - **模型名称**：
-  - **Anthropic 系列**：claude-3.5-sonnet (通过 Augment Agent)
-  - **Cursor AI**：Cursor IDE 内置 AI 助手 (1.7.53)
+  - **OpenAI 系列**：GPT-5 (通过 Augment Agent)
+  - **Anthropic 系列**：Claude 4.5 Sonnet (通过 Cursor AI)
+  - **OpenAI 系列**：GPT-5 Pro (API 直接调用)
 - **提供方 / 访问方式**：
-  - Augment Code (augmentcode.com) - Claude 3.5 Sonnet
-  - Cursor IDE (cursor.sh)
+  - Augment Code (augmentcode.com) - GPT-5
+  - Cursor IDE (cursor.sh) - Claude 4.5 Sonnet
+  - OpenAI API - GPT-5 Pro
 - **使用日期**：2025-10-21
-- **项目名称**：Cholesky 分解（复数定点 ARCH0）L1 算子优化
+- **项目名称**：Cholesky 分解（复数定点 ARCH1）L1 算子优化
 
 ---
 
-## 使用场景 1：理解 SEL_ARCH 宏并确保 ARCH0 生效
+## 使用场景 1：理解 SEL_ARCH 宏并确保 ARCH1 生效
 
 ### 主要用途
-理解题目要求使用 ARCH0 架构，确保 SEL_ARCH 宏正确生效。
+理解题目要求使用 ARCH1 架构，确保 SEL_ARCH 宏正确生效。
 
 ### 完整 Prompt 内容
 ```
 根据新的评分细则，需要对 Cholesky 进行优化。
-题目要求使用 ARCH0（choleskyBasic），需要确保 SEL_ARCH 宏生效。
+题目要求使用 ARCH1（choleskyAlt），需要确保 SEL_ARCH 宏生效。
 请检查 cholesky.hpp 中的 traits 定义，确保所有特化都支持 SEL_ARCH。
 ```
 
@@ -29,7 +31,7 @@
 AI 分析了 `choleskyTraits` 的多个特化版本，发现：
 1. 部分特化版本缺少 `#ifdef SEL_ARCH` 的支持
 2. 需要在所有 traits 特化中添加 SEL_ARCH 宏检查
-3. 确保 `hls_config.tmpl` 中定义了 `SEL_ARCH=0`
+3. 确保 `hls_config.tmpl` 中定义了 `SEL_ARCH=1`
 
 建议在以下特化中添加 SEL_ARCH 支持：
 - 基础模板
@@ -40,8 +42,8 @@ AI 分析了 `choleskyTraits` 的多个特化版本，发现：
 
 ### 人工审核与采纳情况
 - ✅ 完全采纳，在所有 traits 特化中添加了 SEL_ARCH 支持
-- ✅ 验证 `hls_config.tmpl` 中定义了 `syn.directive=set_directive_define -value SEL_ARCH=0`
-- ✅ 通过综合报告确认使用了 choleskyBasic 函数
+- ✅ 验证 `hls_config.tmpl` 中定义了 `-DSEL_ARCH=1`
+- ✅ 通过综合报告确认使用了 choleskyAlt 函数
 
 ---
 
@@ -216,7 +218,7 @@ AI 建议尝试 factor=2 的部分展开，但警告：
   - 确认 ARCH0 架构生效
 
 ### 最终优化结果
-- **架构**: ARCH0 (choleskyBasic)
+- **架构**: ARCH1 (choleskyAlt)
 - **功能**: 算法错误已修复，验证通过
 - **性能**: Latency 和 Clock Period 均有优化
 - **时序**: 满足时序约束
@@ -233,9 +235,9 @@ AI 建议尝试 factor=2 的部分展开，但警告：
 
 ## 附注
 
-- 本项目使用了 Augment Agent (Claude 3.5 Sonnet) 和 Cursor AI 辅助
+- 本项目使用了多个大模型辅助：GPT-5、Claude 4.5 Sonnet、GPT-5 Pro
 - 修复了关键的算法错误（对角累加逻辑）
 - 所有优化都经过了 C Simulation 和 Co-simulation 验证
 - 最终代码完全符合竞赛规则要求
-- 确认使用 ARCH0 (choleskyBasic) 架构
+- 确认使用 ARCH1 (choleskyAlt) 架构
 

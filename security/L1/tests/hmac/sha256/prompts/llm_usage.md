@@ -3,11 +3,13 @@
 ## 基本信息
 
 - **模型名称**：
-  - **Anthropic 系列**：claude-3.5-sonnet (通过 Augment Agent)
-  - **Cursor AI**：Cursor IDE 内置 AI 助手 (1.7.53)
+  - **Anthropic 系列**：Claude 4.5 Sonnet (通过 Augment Agent)
+  - **OpenAI 系列**：GPT-5 Pro (通过 Cursor AI)
+  - **Anthropic 系列**：Claude 4.1 Opus (API 直接调用)
 - **提供方 / 访问方式**：
-  - Augment Code (augmentcode.com) - Claude 3.5 Sonnet
-  - Cursor IDE (cursor.sh)
+  - Augment Code (augmentcode.com) - Claude 4.5 Sonnet
+  - Cursor IDE (cursor.sh) - GPT-5 Pro
+  - Anthropic API - Claude 4.1 Opus
 - **使用日期**：2025-10-21 至 2025-10-25
 - **项目名称**：SHA-256 HMAC L1 算子优化
 
@@ -186,7 +188,7 @@ AI 分析了时序裕量并建议尝试降低 Target Clock，但警告需要确�
 
 ## 附注
 
-- 本项目使用了 Augment Agent (Claude 3.5 Sonnet) 和 Cursor AI 辅助
+- 本项目使用了多个大模型辅助：Claude 4.5 Sonnet、GPT-5 Pro、Claude 4.1 Opus
 - 所有优化都经过了严格的功能验证和性能测试
 - 最终代码完全符合竞赛规则要求
 - AI 提供了优化建议，人工进行了严格筛选和验证

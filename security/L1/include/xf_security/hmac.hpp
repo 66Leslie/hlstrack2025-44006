@@ -188,7 +188,7 @@ void msgHash(hls::stream<ap_uint<blockSize * 8> >& kipadStrm,
 #pragma HLS dataflow
 
     hls::stream<ap_uint<dataW> > mergeKipadStrm;
-#pragma HLS stream variable = mergeKipadStrm depth = 256
+#pragma HLS stream variable = mergeKipadStrm depth = 128
 #pragma HLS resource variable = mergeKipadStrm core = FIFO_BRAM
     hls::stream<ap_uint<lW> > mergeKipadLenStrm;
 #pragma HLS stream variable = mergeKipadLenStrm depth = 32
@@ -197,8 +197,9 @@ void msgHash(hls::stream<ap_uint<blockSize * 8> >& kipadStrm,
 #pragma HLS stream variable = eMergeKipadLenStrm depth = 32
 #pragma HLS resource variable = eMergeKipadLenStrm core = FIFO_LUTRAM
 
-    mergeKipad<dataW, lW, hshW, blockSize>(kipadStrm, kopadInStrm, msgStrm, msgLenStrm, eLenStrm, mergeKipadStrm,
-                                           mergeKipadLenStrm, eMergeKipadLenStrm, kopadOutStrm);
+    xf::security::internal::mergeKipad<dataW, lW, hshW, blockSize>(
+        kipadStrm, kopadInStrm, msgStrm, msgLenStrm, eLenStrm, mergeKipadStrm, mergeKipadLenStrm,
+        eMergeKipadLenStrm, kopadOutStrm);
 
     F<dataW, lW, hshW>::hash(mergeKipadStrm, mergeKipadLenStrm, eMergeKipadLenStrm, msgHashStrm, eMsgHashStrm);
 }
@@ -241,7 +242,7 @@ void resHash(hls::stream<ap_uint<blockSize * 8> >& kopadStrm,
 #pragma HLS dataflow
 
     hls::stream<ap_uint<dataW> > mergeKopadStrm;
-#pragma HLS stream variable = mergeKopadStrm depth = 64
+#pragma HLS stream variable = mergeKopadStrm depth = 128
 #pragma HLS resource variable = mergeKopadStrm core = FIFO_BRAM
     hls::stream<ap_uint<lW> > mergeKopadLenStrm;
 #pragma HLS stream variable = mergeKopadLenStrm depth = 32
@@ -250,8 +251,8 @@ void resHash(hls::stream<ap_uint<blockSize * 8> >& kopadStrm,
 #pragma HLS stream variable = eMergeKopadLenStrm depth = 32
 #pragma HLS resource variable = eMergeKopadLenStrm core = FIFO_LUTRAM
 
-    mergeKopad<dataW, lW, hshW, keyLen, blockSize>(kopadStrm, msgHashStrm, eMsgHashStrm, mergeKopadStrm,
-                                                   mergeKopadLenStrm, eMergeKopadLenStrm);
+    xf::security::internal::mergeKopad<dataW, lW, hshW, keyLen, blockSize>(
+        kopadStrm, msgHashStrm, eMsgHashStrm, mergeKopadStrm, mergeKopadLenStrm, eMergeKopadLenStrm);
 
     F<dataW, lW, hshW>::hash(mergeKopadStrm, mergeKopadLenStrm, eMergeKopadLenStrm, hshStrm, eHshStrm);
 }

@@ -27,7 +27,7 @@ set PROJ "hmac_sha256_test.prj"
 set SOLN "solution1"
 
 if {![info exists CLKP]} {
-  set CLKP 10.0
+  set CLKP 15.0
 }
 
 open_project -reset $PROJ
@@ -41,7 +41,7 @@ open_solution -reset $SOLN
 
 
 set_part $XPART
-create_clock -period 15.0
+create_clock -period $CLKP
 set_clock_uncertainty 10%
 
 if {$CSIM == 1} {
@@ -57,10 +57,20 @@ if {$COSIM == 1} {
 }
 
 if {$VIVADO_SYN == 1} {
+  config_export -vivado_synth_design_args {-directive sdx_optimization_effort_high}
+  config_export -vivado_impl_strategy default
+  config_export -vivado_phys_opt auto
+  config_export -vivado_report_level 2
+  config_export -vivado_max_timing_paths 10
   export_design -flow syn -rtl verilog
 }
 
 if {$VIVADO_IMPL == 1} {
+  config_export -vivado_synth_design_args {-directive sdx_optimization_effort_high}
+  config_export -vivado_impl_strategy default
+  config_export -vivado_phys_opt auto
+  config_export -vivado_report_level 2
+  config_export -vivado_max_timing_paths 10
   export_design -flow impl -rtl verilog
 }
 

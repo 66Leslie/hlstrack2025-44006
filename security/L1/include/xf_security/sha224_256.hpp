@@ -559,8 +559,11 @@ inline void generateMsgSchedule(hls::stream<SHA256Block>& blk_strm,
                     uint32_t s1v = SSIG1(W[i14]);
                     uint32_t s0v = SSIG0(W[i1]);
                     uint32_t tA = s1v + W[i9];
+#pragma HLS bind_op variable=tA op=add impl=fabric
                     uint32_t tB = s0v + W[i0];
+#pragma HLS bind_op variable=tB op=add impl=fabric
                     uint32_t wt = tA + tB;
+#pragma HLS bind_op variable=wt op=add impl=fabric
                     W[i0] = wt;
                     wr_idx = (wr_idx + 1) & 15;
                     w_strm.write(wt);
@@ -640,11 +643,16 @@ inline void sha256_iter_val(uint32_t& a,
     uint32_t maj = (a & bc_x) ^ (b & c);
     // Balanced addition for T1: ((h + Wt) + (Kt + ch)) + s1
     uint32_t t1_a = h + Wt;
+#pragma HLS bind_op variable=t1_a op=add impl=fabric
     uint32_t t1_b = Kt + ch;
+#pragma HLS bind_op variable=t1_b op=add impl=fabric
     uint32_t t1_ab = t1_a + t1_b;
+#pragma HLS bind_op variable=t1_ab op=add impl=fabric
     uint32_t T1 = t1_ab + s1;
+#pragma HLS bind_op variable=T1 op=add impl=fabric
     // T2 uses a balanced single add of s0 + maj
     uint32_t T2 = s0 + maj;
+#pragma HLS bind_op variable=T2 op=add impl=fabric
 
     h = g;
     g = f;
@@ -682,7 +690,7 @@ void sha256Digest(hls::stream<uint64_t>& nblk_strm,
         0xa2bfe8a1UL, 0xa81a664bUL, 0xc24b8b70UL, 0xc76c51a3UL, 0xd192e819UL, 0xd6990624UL, 0xf40e3585UL, 0x106aa070UL,
         0x19a4c116UL, 0x1e376c08UL, 0x2748774cUL, 0x34b0bcb5UL, 0x391c0cb3UL, 0x4ed8aa4aUL, 0x5b9cca4fUL, 0x682e6ff3UL,
         0x748f82eeUL, 0x78a5636fUL, 0x84c87814UL, 0x8cc70208UL, 0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL};
-#pragma HLS array_partition variable = K complete
+#pragma HLS bind_storage variable = K type = rom_1p impl = lutram
 
 LOOP_SHA256_DIGEST_MAIN:
     for (bool end_flag = end_nblk_strm.read(); !end_flag; end_flag = end_nblk_strm.read()) {

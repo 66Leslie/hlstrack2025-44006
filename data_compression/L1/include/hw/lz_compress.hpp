@@ -95,13 +95,16 @@ lz_compress:
         }
         present_window[MATCH_LEN - 1] = inStream.read();
 
-        // Calculate Hash Value
+        // Calculate Hash Value (分两级减少组合延迟)
         uint32_t hash = 0;
         if (MIN_MATCH == 3) {
-            hash = (present_window[0] << 4) ^ (present_window[1] << 3) ^ (present_window[2] << 2) ^
-                   (present_window[0] << 1) ^ (present_window[1]);
+            uint32_t h1 = (present_window[0] << 4) ^ (present_window[1] << 3);
+            uint32_t h2 = (present_window[2] << 2) ^ (present_window[0] << 1) ^ (present_window[1]);
+            hash = h1 ^ h2;
         } else {
-            hash = (present_window[0] << 4) ^ (present_window[1] << 3) ^ (present_window[2] << 2) ^ (present_window[3]);
+            uint32_t h1 = (present_window[0] << 4) ^ (present_window[1] << 3);
+            uint32_t h2 = (present_window[2] << 2) ^ (present_window[3]);
+            hash = h1 ^ h2;
         }
 
         // Dictionary Lookup

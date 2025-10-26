@@ -285,7 +285,8 @@ Function_cholesky_rsqrt_fixed:;
     const ap_fixed<W2, I2, Q2, O2, N2> one_point_five = (ap_fixed<W2, I2, Q2, O2, N2>)1.5;
     const ap_fixed<W2, I2, Q2, O2, N2> half = (ap_fixed<W2, I2, Q2, O2, N2>)0.5;
     ap_fixed<W2, I2, Q2, O2, N2> x_cast = (ap_fixed<W2, I2, Q2, O2, N2>)x;
-    ap_fixed<W2, I2, Q2, O2, N2> y0 = (ap_fixed<W2, I2, Q2, O2, N2>)x_rsqrt((double)x);
+    // 使用单精度初值，避免综合出 double rsqrt IP
+    ap_fixed<W2, I2, Q2, O2, N2> y0 = (ap_fixed<W2, I2, Q2, O2, N2>)x_rsqrt((float)x);
     ap_fixed<W2, I2, Q2, O2, N2> y0_sq = y0 * y0;
     ap_fixed<W2, I2, Q2, O2, N2> term = one_point_five - half * x_cast * y0_sq;
     res = y0 * term;
@@ -499,7 +500,11 @@ row_loop:
             for (int k = 0; k < j; k++) {
 #pragma HLS loop_tripcount max = 1 + RowsColsA / 2
 #pragma HLS PIPELINE II = CholeskyTraits::INNER_II
-                prod = -L_internal[i_off + k] * hls::x_conj(L_internal[j_off + k]);
+                // 局部寄存，降低从 L_internal 到 DSP 的扇出与布线压力
+                auto Li_local = L_internal[i_off + k];
+                auto Lj_local = L_internal[j_off + k];
+                auto Ljc_local = hls::x_conj(Lj_local);
+                prod = -(Li_local * Ljc_local);
                 prod_cast_to_sum = prod;
                 product_sum += prod_cast_to_sum;
             }
@@ -534,7 +539,7 @@ row_loop:
         }
         // Round to target format using method specifed by traits defined types.
         new_L = new_L_diag;
-        // Use one division to get reciprocal of diagonal (lighter latency vs drsqrt here)
+        // 使用 one/diag（保守且周期更优的版本）
         {
             typename CholeskyTraits::RECIP_DIAG_T one = 1;
             new_L_diag_recip = one / hls::x_real(new_L_diag);

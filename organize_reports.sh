@@ -1,152 +1,159 @@
 #!/bin/bash
-# HLS Track 2025 - 自动整理 reports 目录脚本
-# 用途: 将所有必需的报告文件复制到各题目的 reports/ 目录
+# HLS Track 2025 - 报告整理脚本
+# 用途: 整理所有题目的报告到 reports 目录和统一的 Reports 目录
 
-set -e  # 遇到错误立即退出
-
-echo "=========================================="
-echo "HLS Track 2025 - 整理 reports 目录"
-echo "=========================================="
-echo ""
-
-# 定义项目根目录
 PROJECT_ROOT="/home/zxw/project/hlstrack2025"
 
+echo "=========================================="
+echo "整理报告文件"
+echo "=========================================="
+echo ""
+
 # ==========================================
-# 题目 1: SHA-256
+# SHA-256 (提交要求的四个文件)
 # ==========================================
-echo "📁 整理 SHA-256 reports..."
+echo "整理 SHA-256 reports..."
 SHA256_DIR="$PROJECT_ROOT/security/L1/tests/hmac/sha256"
 SHA256_REPORTS="$SHA256_DIR/reports"
-
-# 确保 reports 目录存在
 mkdir -p "$SHA256_REPORTS"
 
-# 复制 csynth.xml
-if [ -f "$SHA256_DIR/hls/hls/syn/report/csynth.xml" ]; then
-    cp "$SHA256_DIR/hls/hls/syn/report/csynth.xml" "$SHA256_REPORTS/"
-    echo "  ✅ 复制 csynth.xml"
-else
-    echo "  ❌ 未找到 csynth.xml"
-fi
+echo "  复制 csynth.xml..."
+cp "$SHA256_DIR/hls/hls/syn/report/csynth.xml" "$SHA256_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
 
-# 复制 csim.log (如果存在)
-if [ -f "$SHA256_DIR/hls/hls/csim/report/test_hmac_sha256_csim.log" ]; then
-    cp "$SHA256_DIR/hls/hls/csim/report/test_hmac_sha256_csim.log" "$SHA256_REPORTS/"
-    echo "  ✅ 复制 test_hmac_sha256_csim.log"
-else
-    echo "  ⚠️  未找到 test_hmac_sha256_csim.log (可能需要重新运行 csim)"
-fi
+echo "  复制 test_hmac_sha256_cosim.rpt..."
+cp "$SHA256_DIR/hls/reports/hls_cosim.rpt" "$SHA256_REPORTS/test_hmac_sha256_cosim.rpt" 2>/dev/null || echo "  ⚠️  未找到"
 
-# cosim.rpt 已经存在
-if [ -f "$SHA256_REPORTS/test_hmac_sha256_cosim.rpt" ]; then
-    echo "  ✅ test_hmac_sha256_cosim.rpt 已存在"
-else
-    echo "  ❌ 未找到 test_hmac_sha256_cosim.rpt"
-fi
+echo "  复制 test_hmac_sha256_csim.log..."
+cp "$SHA256_DIR/hls/hls/csim/report/test_hmac_sha256_csim.log" "$SHA256_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
 
+echo "  复制 export_impl.rpt..."
+cp "$SHA256_DIR/hls/hls/impl/report/verilog/export_impl.rpt" "$SHA256_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
+
+echo "SHA-256 reports (提交要求):"
+ls -lh "$SHA256_REPORTS"
 echo ""
 
 # ==========================================
-# 题目 2: LZ4 Compress
+# LZ4 (提交要求的四个文件)
 # ==========================================
-echo "📁 整理 LZ4 Compress reports..."
+echo "整理 LZ4 Compress reports..."
 LZ4_DIR="$PROJECT_ROOT/data_compression/L1/tests/lz4_compress"
 LZ4_REPORTS="$LZ4_DIR/reports"
-
-# 确保 reports 目录存在
 mkdir -p "$LZ4_REPORTS"
 
-# 复制 csynth.xml
-if [ -f "$LZ4_DIR/hls/hls/syn/report/csynth.xml" ]; then
-    cp "$LZ4_DIR/hls/hls/syn/report/csynth.xml" "$LZ4_REPORTS/"
-    echo "  ✅ 复制 csynth.xml"
-else
-    echo "  ❌ 未找到 csynth.xml"
-fi
+echo "  复制 csynth.xml..."
+cp "$LZ4_DIR/hls/hls/syn/report/csynth.xml" "$LZ4_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
 
-# 复制 csim.log
+echo "  复制 lz4CompressEngineRun_cosim.rpt..."
+cp "$LZ4_DIR/hls/reports/hls_cosim.rpt" "$LZ4_REPORTS/lz4CompressEngineRun_cosim.rpt" 2>/dev/null || echo "  ⚠️  未找到"
+
+echo "  复制 lz4CompressEngineRun_csim.log..."
+# LZ4 的 csim log 可能在不同位置
 if [ -f "$LZ4_DIR/hls/hls/csim/report/lz4CompressEngineRun_csim.log" ]; then
     cp "$LZ4_DIR/hls/hls/csim/report/lz4CompressEngineRun_csim.log" "$LZ4_REPORTS/"
-    echo "  ✅ 复制 lz4CompressEngineRun_csim.log"
+elif [ -f "$LZ4_DIR/reports/lz4CompressEngineRun_csim.log" ]; then
+    echo "  (csim.log 已存在于 reports/)"
 else
-    echo "  ⚠️  未找到 lz4CompressEngineRun_csim.log (可能需要重新运行 csim)"
+    echo "  ⚠️  未找到 csim.log"
 fi
 
-# 复制 cosim.rpt (从 hls/reports/)
-if [ -f "$LZ4_DIR/hls/reports/hls_cosim.rpt" ]; then
-    cp "$LZ4_DIR/hls/reports/hls_cosim.rpt" "$LZ4_REPORTS/"
-    echo "  ✅ 复制 hls_cosim.rpt"
-else
-    echo "  ❌ 未找到 hls_cosim.rpt"
-fi
+echo "  复制 export_impl.rpt..."
+cp "$LZ4_DIR/hls/hls/impl/report/verilog/export_impl.rpt" "$LZ4_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
 
+echo "LZ4 Compress reports (提交要求):"
+ls -lh "$LZ4_REPORTS"
 echo ""
 
 # ==========================================
-# 题目 3: Cholesky
+# Cholesky (提交要求的四个文件)
 # ==========================================
-echo "📁 整理 Cholesky reports..."
+echo "整理 Cholesky reports..."
 CHOLESKY_DIR="$PROJECT_ROOT/solver/L1/tests/cholesky/complex_fixed_arch0"
 CHOLESKY_REPORTS="$CHOLESKY_DIR/reports"
-
-# 确保 reports 目录存在
 mkdir -p "$CHOLESKY_REPORTS"
 
-# 复制 csynth.xml
-if [ -f "$CHOLESKY_DIR/hls/hls/syn/report/csynth.xml" ]; then
-    cp "$CHOLESKY_DIR/hls/hls/syn/report/csynth.xml" "$CHOLESKY_REPORTS/"
-    echo "  ✅ 复制 csynth.xml"
-else
-    echo "  ❌ 未找到 csynth.xml"
-fi
+echo "  复制 csynth.xml..."
+cp "$CHOLESKY_DIR/hls/hls/syn/report/csynth.xml" "$CHOLESKY_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
 
-# 复制 csim.log
+echo "  复制 kernel_cholesky_0_cosim.rpt..."
+cp "$CHOLESKY_DIR/hls/reports/hls_cosim.rpt" "$CHOLESKY_REPORTS/kernel_cholesky_0_cosim.rpt" 2>/dev/null || echo "  ⚠️  未找到"
+
+echo "  复制 kernel_cholesky_0_csim.log..."
+# Cholesky 的 csim log 可能已经在 reports 目录
 if [ -f "$CHOLESKY_DIR/hls/hls/csim/report/kernel_cholesky_0_csim.log" ]; then
     cp "$CHOLESKY_DIR/hls/hls/csim/report/kernel_cholesky_0_csim.log" "$CHOLESKY_REPORTS/"
-    echo "  ✅ 复制 kernel_cholesky_0_csim.log"
+elif [ -f "$CHOLESKY_DIR/reports/kernel_cholesky_0_csim.log" ]; then
+    echo "  (csim.log 已存在于 reports/)"
 else
-    echo "  ⚠️  未找到 kernel_cholesky_0_csim.log (可能需要重新运行 csim)"
+    echo "  ⚠️  未找到 csim.log"
 fi
 
-# 复制 cosim.rpt
-if [ -f "$CHOLESKY_DIR/hls/hls/sim/report/kernel_cholesky_0_cosim.rpt" ]; then
-    cp "$CHOLESKY_DIR/hls/hls/sim/report/kernel_cholesky_0_cosim.rpt" "$CHOLESKY_REPORTS/"
-    echo "  ✅ 复制 kernel_cholesky_0_cosim.rpt"
-else
-    echo "  ❌ 未找到 kernel_cholesky_0_cosim.rpt"
-fi
+echo "  复制 export_impl.rpt..."
+cp "$CHOLESKY_DIR/hls/hls/impl/report/verilog/export_impl.rpt" "$CHOLESKY_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到"
 
+echo "Cholesky reports (提交要求):"
+ls -lh "$CHOLESKY_REPORTS"
 echo ""
 
 # ==========================================
-# 总结
+# 复制到统一的 Reports 目录
 # ==========================================
 echo "=========================================="
-echo "📊 整理完成！检查结果："
+echo "整理统一 Reports 目录"
+echo "=========================================="
+
+UNIFIED_REPORTS="$PROJECT_ROOT/Reports"
+mkdir -p "$UNIFIED_REPORTS/sha256"
+mkdir -p "$UNIFIED_REPORTS/lz4"
+mkdir -p "$UNIFIED_REPORTS/cholesky"
+
+echo "复制 SHA-256 报告..."
+cp -r "$SHA256_REPORTS"/* "$UNIFIED_REPORTS/sha256/" 2>/dev/null
+echo "✅ 已复制到 Reports/sha256/"
+
+echo "复制 LZ4 报告..."
+cp -r "$LZ4_REPORTS"/* "$UNIFIED_REPORTS/lz4/" 2>/dev/null
+echo "✅ 已复制到 Reports/lz4/"
+
+echo "复制 Cholesky 报告..."
+cp -r "$CHOLESKY_REPORTS"/* "$UNIFIED_REPORTS/cholesky/" 2>/dev/null
+echo "✅ 已复制到 Reports/cholesky/"
+
+echo ""
+echo "=========================================="
+echo "验证报告文件"
 echo "=========================================="
 echo ""
 
-echo "SHA-256 reports 目录:"
-ls -lh "$SHA256_REPORTS" | tail -n +2 | awk '{print "  " $9 " (" $5 ")"}'
-echo ""
+# 显示 SHA-256 Cosim 结果
+echo "SHA-256 Cosim 结果:"
+if [ -f "$SHA256_REPORTS/test_hmac_sha256_cosim.rpt" ]; then
+    grep -A 2 "Verilog" "$SHA256_REPORTS/test_hmac_sha256_cosim.rpt" 2>/dev/null || echo "  ⚠️  无法解析"
+else
+    echo "  ⚠️  文件不存在"
+fi
 
-echo "LZ4 Compress reports 目录:"
-ls -lh "$LZ4_REPORTS" | tail -n +2 | awk '{print "  " $9 " (" $5 ")"}'
 echo ""
+echo "LZ4 Compress Cosim 结果:"
+if [ -f "$LZ4_REPORTS/lz4CompressEngineRun_cosim.rpt" ]; then
+    grep -A 2 "Verilog" "$LZ4_REPORTS/lz4CompressEngineRun_cosim.rpt" 2>/dev/null || echo "  ⚠️  无法解析"
+else
+    echo "  ⚠️  文件不存在"
+fi
 
-echo "Cholesky reports 目录:"
-ls -lh "$CHOLESKY_REPORTS" | tail -n +2 | awk '{print "  " $9 " (" $5 ")"}'
 echo ""
+echo "Cholesky Cosim 结果:"
+if [ -f "$CHOLESKY_REPORTS/kernel_cholesky_0_cosim.rpt" ]; then
+    grep -A 2 "Verilog" "$CHOLESKY_REPORTS/kernel_cholesky_0_cosim.rpt" 2>/dev/null || echo "  ⚠️  无法解析"
+else
+    echo "  ⚠️  文件不存在"
+fi
 
+echo ""
 echo "=========================================="
-echo "✅ 所有 reports 目录已整理完成！"
+echo "生成对比报告"
 echo "=========================================="
+python3 "$PROJECT_ROOT/generate_comparison.py"
 echo ""
-echo "下一步操作："
-echo "1. 检查上述文件列表，确认所有必需文件都已复制"
-echo "2. 撰写设计报告 (参考 命题式基础赛道报告模板.md)"
-echo "3. 将仓库推送到 Gitee/GitHub"
-echo "4. 创建压缩包: zip -r hlstrack2025_队伍编码.zip hlstrack2025/"
+echo "📊 对比报告已生成到 Reports/comparison_report.md"
 echo ""
-

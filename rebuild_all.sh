@@ -1,6 +1,6 @@
 #!/bin/bash
 # HLS Track 2025 - 完整重建脚本
-# 用途: 清理所有题目，重新运行 csim, csynth, cosim，并整理 reports
+# 用途: 清理所有题目，重新运行 csim, csynth, cosim, vivado_impl
 
 set -e  # 遇到错误立即退出
 
@@ -38,6 +38,9 @@ make run TARGET=syn
 echo "4. 运行 Co-simulation..."
 make run TARGET=cosim
 
+echo "5. 运行 Vivado Implementation (检查资源)..."
+make run TARGET=vivado_impl
+
 echo "✅ SHA-256 完成！"
 echo ""
 
@@ -62,6 +65,9 @@ make run TARGET=syn
 
 echo "4. 运行 Co-simulation..."
 make run TARGET=cosim
+
+echo "5. 运行 Vivado Implementation (检查资源)..."
+make run TARGET=vivado_impl
 
 echo "✅ LZ4 Compress 完成！"
 echo ""
@@ -88,80 +94,16 @@ make run TARGET=syn
 echo "4. 运行 Co-simulation..."
 make run TARGET=cosim
 
+echo "5. 运行 Vivado Implementation (检查资源)..."
+make run TARGET=vivado_impl
+
 echo "✅ Cholesky 完成！"
 echo ""
 
-# ==========================================
-# 整理 reports 目录
-# ==========================================
-echo "=========================================="
-echo "整理 reports 目录"
-echo "=========================================="
-
-cd "$PROJECT_ROOT"
-
-# SHA-256
-echo "整理 SHA-256 reports..."
-SHA256_REPORTS="$SHA256_DIR/reports"
-mkdir -p "$SHA256_REPORTS"
-
-cp "$SHA256_DIR/hls/hls/syn/report/csynth.xml" "$SHA256_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 csynth.xml"
-cp "$SHA256_DIR/hls/hls/csim/report/test_hmac_sha256_csim.log" "$SHA256_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 csim.log"
-cp "$SHA256_DIR/hls/hls/sim/report/test_hmac_sha256_cosim.rpt" "$SHA256_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 cosim.rpt"
-
-echo "SHA-256 reports 目录:"
-ls -lh "$SHA256_REPORTS"
-echo ""
-
-# LZ4
-echo "整理 LZ4 Compress reports..."
-LZ4_REPORTS="$LZ4_DIR/reports"
-mkdir -p "$LZ4_REPORTS"
-
-cp "$LZ4_DIR/hls/hls/syn/report/csynth.xml" "$LZ4_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 csynth.xml"
-cp "$LZ4_DIR/hls/hls/csim/report/lz4CompressEngineRun_csim.log" "$LZ4_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 csim.log"
-cp "$LZ4_DIR/hls/reports/hls_cosim.rpt" "$LZ4_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 cosim.rpt"
-
-echo "LZ4 Compress reports 目录:"
-ls -lh "$LZ4_REPORTS"
-echo ""
-
-# Cholesky
-echo "整理 Cholesky reports..."
-CHOLESKY_REPORTS="$CHOLESKY_DIR/reports"
-mkdir -p "$CHOLESKY_REPORTS"
-
-cp "$CHOLESKY_DIR/hls/hls/syn/report/csynth.xml" "$CHOLESKY_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 csynth.xml"
-cp "$CHOLESKY_DIR/hls/hls/csim/report/kernel_cholesky_0_csim.log" "$CHOLESKY_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 csim.log"
-cp "$CHOLESKY_DIR/hls/hls/sim/report/kernel_cholesky_0_cosim.rpt" "$CHOLESKY_REPORTS/" 2>/dev/null || echo "  ⚠️  未找到 cosim.rpt"
-
-echo "Cholesky reports 目录:"
-ls -lh "$CHOLESKY_REPORTS"
-echo ""
-
-# ==========================================
-# 验证结果
-# ==========================================
-echo "=========================================="
-echo "验证结果"
-echo "=========================================="
-
-echo ""
-echo "SHA-256 Cosim 结果:"
-grep -A 2 "Verilog" "$SHA256_REPORTS/test_hmac_sha256_cosim.rpt" 2>/dev/null || echo "  ⚠️  未找到 cosim 结果"
-
-echo ""
-echo "LZ4 Compress Cosim 结果:"
-grep -A 2 "Verilog" "$LZ4_REPORTS/hls_cosim.rpt" 2>/dev/null || echo "  ⚠️  未找到 cosim 结果"
-
-echo ""
-echo "Cholesky Cosim 结果:"
-grep -A 2 "Verilog" "$CHOLESKY_REPORTS/kernel_cholesky_0_cosim.rpt" 2>/dev/null || echo "  ⚠️  未找到 cosim 结果"
-
-echo ""
 echo "=========================================="
 echo "✅ 所有测试完成！"
 echo "=========================================="
 echo ""
-echo "下一步: 运行 python3 detailed_comparison.py 查看详细得分"
-
+echo "请运行以下命令手动整理报告:"
+echo "  ./organize_reports.sh"
+echo ""

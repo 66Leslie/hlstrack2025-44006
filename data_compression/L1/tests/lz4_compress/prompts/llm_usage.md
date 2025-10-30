@@ -1,6 +1,6 @@
 # 大模型辅助使用记录
 
-## 基本信息
+## 1. 基本信息
 
 - **模型名称**：
   - **Anthropic 系列**：Claude 4.5 Sonnet (通过 Cursor AI)
@@ -8,20 +8,45 @@
 - **提供方 / 访问方式**：
   - Cursor IDE (cursor.sh) - Claude 4.5 Sonnet
   - Augment Code (augmentcode.com) - GPT-5
-- **使用日期**：2025-10-25 至 2025-10-26
+- **使用日期**：2025-10-21 至 2025-10-30
 - **项目名称**：LZ4 Compress L1 算子 HLS 性能优化
+
+### 1.2 研究背景
+
+LZ4 是由 Yann Collet 于 2011 年开发的无损数据压缩算法，基于经典的 LZ77 (Lempel-Ziv 1977) 字典压缩原理。该算法以极高的压缩/解压速度著称，在保持合理压缩比的同时，可达到数 GB/s 的吞吐率，广泛应用于实时数据处理、存储系统和网络传输等领域。
 
 ---
 
-## 项目背景说明
+## 2. 算法理论基础
 
-### LZ4 压缩算法原理
+### 2.1 LZ4 压缩算法原理
 
-LZ4 是一种面向速度优化的无损压缩算法，基于 LZ77 字典压缩原理。
+LZ4 是一种面向速度优化的无损压缩算法，属于 LZ77 系列字典压缩算法的一个变种。其核心思想是通过滑动窗口机制维护历史数据字典，利用数据的局部相关性，将重复出现的字节序列替换为对历史数据的引用（偏移量和长度），从而实现数据压缩。
+
+**算法数学描述**：
+
+1. **哈希函数**（字典查找）：
+$$
+h(x) = \left(\left(x \gg 12\right) \oplus x\right) \land (\text{DICT\_SIZE} - 1)
+$$
+
+2. **匹配长度编码**：
+$$
+\text{Token} = 
+\begin{cases}
+\text{Literal\_Length} \times 16 + \text{Match\_Length}, & \text{if both} < 15 \\
+\text{Extended encoding}, & \text{otherwise}
+\end{cases}
+$$
+
+3. **压缩比**：
+$$
+R = \frac{S_{\text{original}}}{S_{\text{compressed}}}
+$$
 
 **核心流程**：
-1. **滑动窗口字典查找**：维护 LZ_DICT_SIZE 大小的历史数据窗口
-2. **哈希计算**：快速定位可能的匹配位置
+1. **滑动窗口字典查找**：维护 \(\text{LZ\_DICT\_SIZE}\) 大小的历史数据窗口
+2. **哈希计算**：通过哈希函数 \(h(x)\) 快速定位可能的匹配位置
 3. **匹配长度计算**：找到最长匹配序列
 4. **编码输出**：输出字面值(Literal)或匹配对(Length-Offset)
 
@@ -358,13 +383,16 @@ hash_loop:
 | **Status** | Pass | **Pass** ✅ | - |
 
 **核心评分指标**：
-```
-T_exec = Estimated_Clock_Period × Cosim_Latency
-       = 8.963 ns × 1,378 cycles
-       = 12,351.0 ns
-```
 
-与 Baseline (44,815.8 ns) 相比，执行时间改善 **72.4%** 🎉
+$$
+T_{\text{exec}} = T_{\text{clock}} \times N_{\text{cycles}} = 8.963 \text{ ns} \times 1{,}378 = 12{,}351.0 \text{ ns}
+$$
+
+与 Baseline (\(T_{\text{baseline}} = 44{,}815.8\) ns) 相比，执行时间改善率为：
+
+$$
+\eta = \frac{T_{\text{baseline}} - T_{\text{exec}}}{T_{\text{baseline}}} = \frac{44{,}815.8 - 12{,}351.0}{44{,}815.8} = 72.4\%
+$$
 
 #### 资源使用（XC7Z020 平台）
 
@@ -398,9 +426,15 @@ T_exec = Estimated_Clock_Period × Cosim_Latency
 #### 关键优化点排序
 
 **执行时间改善 72.4% 的贡献分解**：
-- Clock Period 改善：32.2% (13.220 → 8.963 ns)
-- Latency 改善：59.4% (3,390 → 1,378 cycles)
-- 综合效果：(1 - 0.678 × 0.406) = 72.4%
+
+$$
+\eta_{\text{total}} = 1 - \frac{T_{\text{clock,opt}}}{T_{\text{clock,base}}} \times \frac{N_{\text{cycles,opt}}}{N_{\text{cycles,base}}}
+$$
+
+其中：
+- 时钟周期改善：\(\eta_{\text{clock}} = 1 - \frac{8.963}{13.220} = 32.2\%\)
+- 延迟周期改善：\(\eta_{\text{latency}} = 1 - \frac{1{,}378}{3{,}390} = 59.4\%\)
+- 综合改善率：\(\eta_{\text{total}} = 1 - 0.678 \times 0.406 = 72.4\%\)
 
 1. **时钟周期优化**（Clock Period ↓32.2%）
    - 调整目标时钟从 15ns 降至 10ns
@@ -465,4 +499,3 @@ T_exec = Estimated_Clock_Period × Cosim_Latency
    - 再时序优化（时钟周期调整）
    - 最后微调（参数优化）
    - 每步都验证功能与性能
-

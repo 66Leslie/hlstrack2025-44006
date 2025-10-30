@@ -496,6 +496,9 @@ row_loop:
             } else {
                 product_sum = hls::x_conj(A[j][i]);
             }
+            // 将复数累加拆为标量在循环外寄存，避免每拍对 product_sum.re/im 读写导致的 select 链
+            auto sum_re_acc = hls::x_real(product_sum);
+            auto sum_im_acc = hls::x_imag(product_sum);
         sum_loop:
             for (int k = 0; k < j; k++) {
 #pragma HLS loop_tripcount max = 1 + RowsColsA / 2
@@ -503,11 +506,25 @@ row_loop:
                 // 局部寄存，降低从 L_internal 到 DSP 的扇出与布线压力
                 auto Li_local = L_internal[i_off + k];
                 auto Lj_local = L_internal[j_off + k];
-                auto Ljc_local = hls::x_conj(Lj_local);
-                prod = -(Li_local * Ljc_local);
-                prod_cast_to_sum = prod;
-                product_sum += prod_cast_to_sum;
+                // 分实部/虚部累加，避免复杂 add/select 链
+                auto Li_re = hls::x_real(Li_local);
+                auto Li_im = hls::x_imag(Li_local);
+                auto Lj_re = hls::x_real(Lj_local);
+                auto Lj_im = hls::x_imag(Lj_local);
+
+                // 实部: -(Li_re*Lj_re + Li_im*Lj_im)
+                auto m0 = Li_re * Lj_re;
+                auto m1 = Li_im * Lj_im;
+                sum_re_acc = sum_re_acc - (m0 + m1);
+
+                // 虚部:  (Li_re*Lj_im - Li_im*Lj_re)
+                auto m2 = Li_re * Lj_im;
+                auto m3 = Li_im * Lj_re;
+                sum_im_acc = sum_im_acc + (m2 - m3);
             }
+            // 回写一次，避免循环内对 product_sum 的频繁选择/写入
+            product_sum.real(sum_re_acc);
+            product_sum.imag(sum_im_acc);
             prod_cast_to_off_diag = product_sum;
             // Fetch diagonal value
             L_diag_recip = diag_internal[j];
@@ -539,10 +556,11 @@ row_loop:
         }
         // Round to target format using method specifed by traits defined types.
         new_L = new_L_diag;
-        // 使用 one/diag（保守且周期更优的版本）
+        // 用 float 除法计算对角倒数，避免高延迟的定点 sdiv
         {
-            typename CholeskyTraits::RECIP_DIAG_T one = 1;
-            new_L_diag_recip = one / hls::x_real(new_L_diag);
+            float diag_f = (float)hls::x_real(new_L_diag);
+            float recip_f = 1.0f / diag_f;
+            new_L_diag_recip = (typename CholeskyTraits::RECIP_DIAG_T)recip_f;
         }
         // Store diagonal reciprocal for later off-diagonal computations
         diag_internal[i] = new_L_diag_recip;

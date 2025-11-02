@@ -1,0 +1,642 @@
+
+
+================================================================
+== Synthesis Summary Report of 'test_hmac_sha256'
+================================================================
++ General Information: 
+    * Date:           Tue Oct 28 14:34:04 2025
+    * Version:        2024.2 (Build 5238294 on Nov  8 2024)
+    * Project:        hls
+    * Solution:       hls (Vivado IP Flow Target)
+    * Product family: zynq
+    * Target device:  xc7z020-clg484-1
+    
+
++ Performance & Resource Estimates: 
+    
+    PS: '+' for module; 'o' for loop; '*' for dataflow
+    +-----------------------------------------------------------------------+------+-------+---------+---------+----------+---------+------+----------+-----------+----+-------------+-------------+-----+
+    |                                Modules                                | Issue|       | Latency | Latency | Iteration|         | Trip |          |           |    |             |             |     |
+    |                                & Loops                                | Type | Slack | (cycles)|   (ns)  |  Latency | Interval| Count| Pipelined|   BRAM    | DSP|      FF     |     LUT     | URAM|
+    +-----------------------------------------------------------------------+------+-------+---------+---------+----------+---------+------+----------+-----------+----+-------------+-------------+-----+
+    |+ test_hmac_sha256                                                     |     -|   0.25|        -|        -|         -|        -|     -|        no|  145 (51%)|   -|  17734 (16%)|  15751 (29%)|    -|
+    | + hmacDataflow_32_64_256_32_64_sha256_wrapper_s*                      |     -|   0.25|        -|        -|         -|        -|     -|  dataflow|  145 (51%)|   -|  17729 (16%)|  15735 (29%)|    -|
+    |  + kpad_32_64_256_32_64_sha256_wrapper_s                              |     -|   3.77|        -|        -|         -|        -|     -|        no|          -|   -|    271 (~0%)|    1197 (2%)|    -|
+    |   o VITIS_LOOP_118_1                                                  |     -|  10.80|        -|        -|        14|        -|     -|        no|          -|   -|            -|            -|    -|
+    |    + kpad_32_64_256_32_64_sha256_wrapper_Pipeline_VITIS_LOOP_120_2    |     -|   5.73|       10|  120.000|         -|       10|     -|        no|          -|   -|    263 (~0%)|     84 (~0%)|    -|
+    |     o VITIS_LOOP_120_2                                                |     -|  10.80|        8|   96.000|         2|        1|     8|       yes|          -|   -|            -|            -|    -|
+    |  + msgHash_32_64_256_32_64_sha256_wrapper_s*                          |     -|   0.25|        -|        -|         -|        -|     -|  dataflow|   29 (10%)|   -|    8150 (7%)|   7197 (13%)|    -|
+    |   + mergeKipad_32_64_256_64_s                                         |     -|   0.25|        -|        -|         -|        -|     -|        no|          -|   -|    1173 (1%)|     597 (1%)|    -|
+    |    o VITIS_LOOP_152_1                                                 |     -|  10.80|        -|        -|         -|        -|     -|        no|          -|   -|            -|            -|    -|
+    |     + mergeKipad_32_64_256_64_Pipeline_VITIS_LOOP_162_2               |     -|   5.84|       18|  216.000|         -|       18|     -|        no|          -|   -|    520 (~0%)|     85 (~0%)|    -|
+    |      o VITIS_LOOP_162_2                                               |     -|  10.80|       16|  192.000|         2|        1|    16|       yes|          -|   -|            -|            -|    -|
+    |     + mergeKipad_32_64_256_64_Pipeline_VITIS_LOOP_171_3               |     -|   3.60|        -|        -|         -|        -|     -|        no|          -|   -|     67 (~0%)|    200 (~0%)|    -|
+    |      o VITIS_LOOP_171_3                                               |     -|  10.80|        -|        -|         2|        1|     -|       yes|          -|   -|            -|            -|    -|
+    |   + hash                                                              |     -|   0.59|        -|        -|         -|        -|     -|        no|   29 (10%)|   -|    6679 (6%)|   6366 (11%)|    -|
+    |    + sha256_top_32_256_s*                                             |     -|   0.59|        -|        -|         -|        -|     -|  dataflow|   29 (10%)|   -|    6673 (6%)|   6339 (11%)|    -|
+    |     + preProcessing                                                   |     -|   1.72|        -|        -|         -|        -|     -|        no|          -|   -|    2266 (2%)|    2211 (4%)|    -|
+    |      o LOOP_SHA256_GENENERATE_MAIN                                    |     -|  10.80|        -|        -|        38|        -|     -|        no|          -|   -|            -|            -|    -|
+    |       o LOOP_SHA256_GEN_FULL_BLKS_LOOP_SHA256_GEN_ONE_FULL_BLK        |     -|  10.80|       17|  204.000|         2|        1|    16|       yes|          -|   -|            -|            -|    -|
+    |       o LOOP_SHA256_GEN_COPY_TAIL_AND_ONE                             |     -|  10.80|       14|  168.000|         2|        1|    14|       yes|          -|   -|            -|            -|    -|
+    |     + dup_strm*                                                       |     -|   3.54|        -|        -|         -|        -|     -|  dataflow|          -|   -|    216 (~0%)|    429 (~0%)|    -|
+    |      + dup_strm_Loop_VITIS_LOOP_512_1_proc                            |    II|   3.54|        2|   24.000|         -|        1|     -|    rewind|          -|   -|      9 (~0%)|    146 (~0%)|    -|
+    |       o VITIS_LOOP_512_1                                              |     -|  10.80|        1|   12.000|         2|        1|     1|       yes|          -|   -|            -|            -|    -|
+    |      + dup_strm_Block_entry_end_nblk_strm1_wr_end_nblk_strm2_wr_proc  |     -|   3.54|        -|        -|         -|        0|     -|    rewind|          -|   -|      8 (~0%)|    138 (~0%)|    -|
+    |       o VITIS_LOOP_528_2                                              |     -|  10.80|        -|        -|         2|        1|     -|       yes|          -|   -|            -|            -|    -|
+    |     + generateMsgSchedule                                             |     -|   1.74|        -|        -|         -|        -|     -|        no|          -|   -|    2259 (2%)|    1153 (2%)|    -|
+    |      o VITIS_LOOP_555_1                                               |     -|  10.80|        -|        -|         -|        -|     -|        no|          -|   -|            -|            -|    -|
+    |       o VITIS_LOOP_557_2                                              |     -|  10.80|        -|        -|        67|        -|     -|        no|          -|   -|            -|            -|    -|
+    |        o LOOP_SHA256_PREPARE_WT16                                     |     -|  10.80|       15|  180.000|         1|        1|    16|       yes|          -|   -|            -|            -|    -|
+    |        o VITIS_LOOP_579_3                                             |     -|  10.80|       47|  564.000|         1|        1|    48|       yes|          -|   -|            -|            -|    -|
+    |     + sha256Digest_256_s                                              |     -|   0.59|        -|        -|         -|        -|     -|        no|          -|   -|    1078 (1%)|    1437 (2%)|    -|
+    |      o LOOP_SHA256_DIGEST_MAIN                                        |     -|  10.80|        -|        -|        69|        -|     -|        no|          -|   -|            -|            -|    -|
+    |       o LOOP_SHA256_DIGEST_NBLK                                       |     -|  10.80|       67|  804.000|        67|        -|     1|        no|          -|   -|            -|            -|    -|
+    |        o VITIS_LOOP_802_1                                             |     -|  10.80|       64|  768.000|         2|        1|    64|       yes|          -|   -|            -|            -|    -|
+    |         + sha256_iter_val                                             |     -|   0.59|        0|    0.000|         -|        1|     -|       yes|          -|   -|            -|     625 (1%)|    -|
+    |  + resHash_32_64_256_32_64_sha256_wrapper_s*                          |     -|   0.59|        -|        -|         -|        -|     -|  dataflow|   29 (10%)|   -|    8537 (8%)|   6897 (12%)|    -|
+    |   + mergeKopad_32_64_256_32_64_s                                      |     -|   3.45|        -|        -|         -|        -|     -|        no|          -|   -|    1561 (1%)|    310 (~0%)|    -|
+    |    o VITIS_LOOP_214_1                                                 |     -|  10.80|        -|        -|        33|        -|     -|        no|          -|   -|            -|            -|    -|
+    |     + mergeKopad_32_64_256_32_64_Pipeline_VITIS_LOOP_221_2            |     -|   5.84|       18|  216.000|         -|       18|     -|        no|          -|   -|    520 (~0%)|     85 (~0%)|    -|
+    |      o VITIS_LOOP_221_2                                               |     -|  10.80|       16|  192.000|         2|        1|    16|       yes|          -|   -|            -|            -|    -|
+    |     + mergeKopad_32_64_256_32_64_Pipeline_VITIS_LOOP_227_3            |     -|   5.89|       10|  120.000|         -|       10|     -|        no|          -|   -|    263 (~0%)|     84 (~0%)|    -|
+    |      o VITIS_LOOP_227_3                                               |     -|  10.80|        8|   96.000|         2|        1|     8|       yes|          -|   -|            -|            -|    -|
+    |   + hash_1                                                            |     -|   0.59|        -|        -|         -|        -|     -|        no|   29 (10%)|   -|    6679 (6%)|   6366 (11%)|    -|
+    |    + sha256_top_32_256_s*                                             |     -|   0.59|        -|        -|         -|        -|     -|  dataflow|   29 (10%)|   -|    6673 (6%)|   6339 (11%)|    -|
+    |     + preProcessing                                                   |     -|   1.72|        -|        -|         -|        -|     -|        no|          -|   -|    2266 (2%)|    2211 (4%)|    -|
+    |      o LOOP_SHA256_GENENERATE_MAIN                                    |     -|  10.80|        -|        -|        38|        -|     -|        no|          -|   -|            -|            -|    -|
+    |       o LOOP_SHA256_GEN_FULL_BLKS_LOOP_SHA256_GEN_ONE_FULL_BLK        |     -|  10.80|       17|  204.000|         2|        1|    16|       yes|          -|   -|            -|            -|    -|
+    |       o LOOP_SHA256_GEN_COPY_TAIL_AND_ONE                             |     -|  10.80|       14|  168.000|         2|        1|    14|       yes|          -|   -|            -|            -|    -|
+    |     + dup_strm*                                                       |     -|   3.54|        -|        -|         -|        -|     -|  dataflow|          -|   -|    216 (~0%)|    429 (~0%)|    -|
+    |      + dup_strm_Loop_VITIS_LOOP_512_1_proc                            |    II|   3.54|        2|   24.000|         -|        1|     -|    rewind|          -|   -|      9 (~0%)|    146 (~0%)|    -|
+    |       o VITIS_LOOP_512_1                                              |     -|  10.80|        1|   12.000|         2|        1|     1|       yes|          -|   -|            -|            -|    -|
+    |      + dup_strm_Block_entry_end_nblk_strm1_wr_end_nblk_strm2_wr_proc  |     -|   3.54|        -|        -|         -|        0|     -|    rewind|          -|   -|      8 (~0%)|    138 (~0%)|    -|
+    |       o VITIS_LOOP_528_2                                              |     -|  10.80|        -|        -|         2|        1|     -|       yes|          -|   -|            -|            -|    -|
+    |     + generateMsgSchedule                                             |     -|   1.74|        -|        -|         -|        -|     -|        no|          -|   -|    2259 (2%)|    1153 (2%)|    -|
+    |      o VITIS_LOOP_555_1                                               |     -|  10.80|        -|        -|         -|        -|     -|        no|          -|   -|            -|            -|    -|
+    |       o VITIS_LOOP_557_2                                              |     -|  10.80|        -|        -|        67|        -|     -|        no|          -|   -|            -|            -|    -|
+    |        o LOOP_SHA256_PREPARE_WT16                                     |     -|  10.80|       15|  180.000|         1|        1|    16|       yes|          -|   -|            -|            -|    -|
+    |        o VITIS_LOOP_579_3                                             |     -|  10.80|       47|  564.000|         1|        1|    48|       yes|          -|   -|            -|            -|    -|
+    |     + sha256Digest_256_s                                              |     -|   0.59|        -|        -|         -|        -|     -|        no|          -|   -|    1078 (1%)|    1437 (2%)|    -|
+    |      o LOOP_SHA256_DIGEST_MAIN                                        |     -|  10.80|        -|        -|        69|        -|     -|        no|          -|   -|            -|            -|    -|
+    |       o LOOP_SHA256_DIGEST_NBLK                                       |     -|  10.80|       67|  804.000|        67|        -|     1|        no|          -|   -|            -|            -|    -|
+    |        o VITIS_LOOP_802_1                                             |     -|  10.80|       64|  768.000|         2|        1|    64|       yes|          -|   -|            -|            -|    -|
+    |         + sha256_iter_val                                             |     -|   0.59|        0|    0.000|         -|        1|     -|       yes|          -|   -|            -|     625 (1%)|    -|
+    +-----------------------------------------------------------------------+------+-------+---------+---------+----------+---------+------+----------+-----------+----+-------------+-------------+-----+
+
+
+================================================================
+== HW Interfaces
+================================================================
+* AP_FIFO
++-----------+-----------+------------+
+| Interface | Direction | Data Width |
++-----------+-----------+------------+
+| eHshStrm  | out       | 1          |
+| eLenStrm  | in        | 1          |
+| hshStrm   | out       | 256        |
+| keyStrm   | in        | 32         |
+| lenStrm   | in        | 64         |
+| msgStrm   | in        | 32         |
++-----------+-----------+------------+
+
+* TOP LEVEL CONTROL
++-----------+------------+-----------------------------------+
+| Interface | Type       | Ports                             |
++-----------+------------+-----------------------------------+
+| ap_clk    | clock      | ap_clk                            |
+| ap_rst    | reset      | ap_rst                            |
+| ap_ctrl   | ap_ctrl_hs | ap_done ap_idle ap_ready ap_start |
++-----------+------------+-----------------------------------+
+
+
+================================================================
+== SW I/O Information
+================================================================
+* Top Function Arguments
++----------+-----------+--------------------------+
+| Argument | Direction | Datatype                 |
++----------+-----------+--------------------------+
+| keyStrm  | in        | stream<ap_uint<32>, 0>&  |
+| msgStrm  | in        | stream<ap_uint<32>, 0>&  |
+| lenStrm  | in        | stream<ap_uint<64>, 0>&  |
+| eLenStrm | in        | stream<bool, 0>&         |
+| hshStrm  | out       | stream<ap_uint<256>, 0>& |
+| eHshStrm | out       | stream<bool, 0>&         |
++----------+-----------+--------------------------+
+
+* SW-to-HW Mapping
++----------+--------------+-----------+
+| Argument | HW Interface | HW Type   |
++----------+--------------+-----------+
+| keyStrm  | keyStrm      | interface |
+| msgStrm  | msgStrm      | interface |
+| lenStrm  | lenStrm      | interface |
+| eLenStrm | eLenStrm     | interface |
+| hshStrm  | hshStrm      | interface |
+| eHshStrm | eHshStrm     | interface |
++----------+--------------+-----------+
+
+
+================================================================
+== M_AXI Burst Information
+================================================================
+ Note: All burst requests might be further partitioned into multiple requests during RTL generation based on max_read_burst_length or max_write_burst_length settings.
+
+
+================================================================
+== Bind Op Report
+================================================================
++--------------------------------------------------------------------+-----+--------+---------------+-----------+--------------------------+---------+
+| Name                                                               | DSP | Pragma | Variable      | Op        | Impl                     | Latency |
++--------------------------------------------------------------------+-----+--------+---------------+-----------+--------------------------+---------+
+| + test_hmac_sha256                                                 | 0   |        |               |           |                          |         |
+|  + hmacDataflow_32_64_256_32_64_sha256_wrapper_s                   | 0   |        |               |           |                          |         |
+|   + kpad_32_64_256_32_64_sha256_wrapper_s                          | 0   |        |               |           |                          |         |
+|     xor_ln131_fu_259_p2                                            |     |        | xor_ln131     | xor       | auto                     | 0       |
+|     xor_ln132_fu_265_p2                                            |     |        | xor_ln132     | xor       | auto                     | 0       |
+|     xor_ln131_1_fu_279_p2                                          |     |        | xor_ln131_1   | xor       | auto                     | 0       |
+|     xor_ln132_1_fu_285_p2                                          |     |        | xor_ln132_1   | xor       | auto                     | 0       |
+|     xor_ln131_2_fu_299_p2                                          |     |        | xor_ln131_2   | xor       | auto                     | 0       |
+|     xor_ln132_2_fu_305_p2                                          |     |        | xor_ln132_2   | xor       | auto                     | 0       |
+|     xor_ln131_3_fu_319_p2                                          |     |        | xor_ln131_3   | xor       | auto                     | 0       |
+|     xor_ln132_3_fu_325_p2                                          |     |        | xor_ln132_3   | xor       | auto                     | 0       |
+|     xor_ln131_4_fu_339_p2                                          |     |        | xor_ln131_4   | xor       | auto                     | 0       |
+|     xor_ln132_4_fu_345_p2                                          |     |        | xor_ln132_4   | xor       | auto                     | 0       |
+|     xor_ln131_5_fu_359_p2                                          |     |        | xor_ln131_5   | xor       | auto                     | 0       |
+|     xor_ln132_5_fu_365_p2                                          |     |        | xor_ln132_5   | xor       | auto                     | 0       |
+|     xor_ln131_6_fu_379_p2                                          |     |        | xor_ln131_6   | xor       | auto                     | 0       |
+|     xor_ln132_6_fu_385_p2                                          |     |        | xor_ln132_6   | xor       | auto                     | 0       |
+|     xor_ln131_7_fu_399_p2                                          |     |        | xor_ln131_7   | xor       | auto                     | 0       |
+|     xor_ln132_7_fu_405_p2                                          |     |        | xor_ln132_7   | xor       | auto                     | 0       |
+|     xor_ln131_8_fu_419_p2                                          |     |        | xor_ln131_8   | xor       | auto                     | 0       |
+|     xor_ln132_8_fu_425_p2                                          |     |        | xor_ln132_8   | xor       | auto                     | 0       |
+|     xor_ln131_9_fu_439_p2                                          |     |        | xor_ln131_9   | xor       | auto                     | 0       |
+|     xor_ln132_9_fu_445_p2                                          |     |        | xor_ln132_9   | xor       | auto                     | 0       |
+|     xor_ln131_10_fu_459_p2                                         |     |        | xor_ln131_10  | xor       | auto                     | 0       |
+|     xor_ln132_10_fu_465_p2                                         |     |        | xor_ln132_10  | xor       | auto                     | 0       |
+|     xor_ln131_11_fu_479_p2                                         |     |        | xor_ln131_11  | xor       | auto                     | 0       |
+|     xor_ln132_11_fu_485_p2                                         |     |        | xor_ln132_11  | xor       | auto                     | 0       |
+|     xor_ln131_12_fu_499_p2                                         |     |        | xor_ln131_12  | xor       | auto                     | 0       |
+|     xor_ln132_12_fu_505_p2                                         |     |        | xor_ln132_12  | xor       | auto                     | 0       |
+|     xor_ln131_13_fu_519_p2                                         |     |        | xor_ln131_13  | xor       | auto                     | 0       |
+|     xor_ln132_13_fu_525_p2                                         |     |        | xor_ln132_13  | xor       | auto                     | 0       |
+|     xor_ln131_14_fu_539_p2                                         |     |        | xor_ln131_14  | xor       | auto                     | 0       |
+|     xor_ln132_14_fu_545_p2                                         |     |        | xor_ln132_14  | xor       | auto                     | 0       |
+|     xor_ln131_15_fu_559_p2                                         |     |        | xor_ln131_15  | xor       | auto                     | 0       |
+|     xor_ln132_15_fu_565_p2                                         |     |        | xor_ln132_15  | xor       | auto                     | 0       |
+|     xor_ln131_16_fu_579_p2                                         |     |        | xor_ln131_16  | xor       | auto                     | 0       |
+|     xor_ln132_16_fu_585_p2                                         |     |        | xor_ln132_16  | xor       | auto                     | 0       |
+|     xor_ln131_17_fu_599_p2                                         |     |        | xor_ln131_17  | xor       | auto                     | 0       |
+|     xor_ln132_17_fu_605_p2                                         |     |        | xor_ln132_17  | xor       | auto                     | 0       |
+|     xor_ln131_18_fu_619_p2                                         |     |        | xor_ln131_18  | xor       | auto                     | 0       |
+|     xor_ln132_18_fu_625_p2                                         |     |        | xor_ln132_18  | xor       | auto                     | 0       |
+|     xor_ln131_19_fu_639_p2                                         |     |        | xor_ln131_19  | xor       | auto                     | 0       |
+|     xor_ln132_19_fu_645_p2                                         |     |        | xor_ln132_19  | xor       | auto                     | 0       |
+|     xor_ln131_20_fu_659_p2                                         |     |        | xor_ln131_20  | xor       | auto                     | 0       |
+|     xor_ln132_20_fu_665_p2                                         |     |        | xor_ln132_20  | xor       | auto                     | 0       |
+|     xor_ln131_21_fu_679_p2                                         |     |        | xor_ln131_21  | xor       | auto                     | 0       |
+|     xor_ln132_21_fu_685_p2                                         |     |        | xor_ln132_21  | xor       | auto                     | 0       |
+|     xor_ln131_22_fu_699_p2                                         |     |        | xor_ln131_22  | xor       | auto                     | 0       |
+|     xor_ln132_22_fu_705_p2                                         |     |        | xor_ln132_22  | xor       | auto                     | 0       |
+|     xor_ln131_23_fu_719_p2                                         |     |        | xor_ln131_23  | xor       | auto                     | 0       |
+|     xor_ln132_23_fu_725_p2                                         |     |        | xor_ln132_23  | xor       | auto                     | 0       |
+|     xor_ln131_24_fu_739_p2                                         |     |        | xor_ln131_24  | xor       | auto                     | 0       |
+|     xor_ln132_24_fu_745_p2                                         |     |        | xor_ln132_24  | xor       | auto                     | 0       |
+|     xor_ln131_25_fu_759_p2                                         |     |        | xor_ln131_25  | xor       | auto                     | 0       |
+|     xor_ln132_25_fu_765_p2                                         |     |        | xor_ln132_25  | xor       | auto                     | 0       |
+|     xor_ln131_26_fu_779_p2                                         |     |        | xor_ln131_26  | xor       | auto                     | 0       |
+|     xor_ln132_26_fu_785_p2                                         |     |        | xor_ln132_26  | xor       | auto                     | 0       |
+|     xor_ln131_27_fu_799_p2                                         |     |        | xor_ln131_27  | xor       | auto                     | 0       |
+|     xor_ln132_27_fu_805_p2                                         |     |        | xor_ln132_27  | xor       | auto                     | 0       |
+|     xor_ln131_28_fu_819_p2                                         |     |        | xor_ln131_28  | xor       | auto                     | 0       |
+|     xor_ln132_28_fu_825_p2                                         |     |        | xor_ln132_28  | xor       | auto                     | 0       |
+|     xor_ln131_29_fu_839_p2                                         |     |        | xor_ln131_29  | xor       | auto                     | 0       |
+|     xor_ln132_29_fu_845_p2                                         |     |        | xor_ln132_29  | xor       | auto                     | 0       |
+|     xor_ln131_30_fu_859_p2                                         |     |        | xor_ln131_30  | xor       | auto                     | 0       |
+|     xor_ln132_30_fu_865_p2                                         |     |        | xor_ln132_30  | xor       | auto                     | 0       |
+|     xor_ln131_31_fu_879_p2                                         |     |        | xor_ln131_31  | xor       | auto                     | 0       |
+|     xor_ln132_31_fu_885_p2                                         |     |        | xor_ln132_31  | xor       | auto                     | 0       |
+|     xor_ln131_32_fu_899_p2                                         |     |        | xor_ln131_32  | xor       | auto                     | 0       |
+|     xor_ln132_32_fu_905_p2                                         |     |        | xor_ln132_32  | xor       | auto                     | 0       |
+|     xor_ln131_33_fu_919_p2                                         |     |        | xor_ln131_33  | xor       | auto                     | 0       |
+|     xor_ln132_33_fu_925_p2                                         |     |        | xor_ln132_33  | xor       | auto                     | 0       |
+|     xor_ln131_34_fu_939_p2                                         |     |        | xor_ln131_34  | xor       | auto                     | 0       |
+|     xor_ln132_34_fu_945_p2                                         |     |        | xor_ln132_34  | xor       | auto                     | 0       |
+|     xor_ln131_35_fu_959_p2                                         |     |        | xor_ln131_35  | xor       | auto                     | 0       |
+|     xor_ln132_35_fu_965_p2                                         |     |        | xor_ln132_35  | xor       | auto                     | 0       |
+|     xor_ln131_36_fu_979_p2                                         |     |        | xor_ln131_36  | xor       | auto                     | 0       |
+|     xor_ln132_36_fu_985_p2                                         |     |        | xor_ln132_36  | xor       | auto                     | 0       |
+|     xor_ln131_37_fu_999_p2                                         |     |        | xor_ln131_37  | xor       | auto                     | 0       |
+|     xor_ln132_37_fu_1005_p2                                        |     |        | xor_ln132_37  | xor       | auto                     | 0       |
+|     xor_ln131_38_fu_1019_p2                                        |     |        | xor_ln131_38  | xor       | auto                     | 0       |
+|     xor_ln132_38_fu_1025_p2                                        |     |        | xor_ln132_38  | xor       | auto                     | 0       |
+|     xor_ln131_39_fu_1039_p2                                        |     |        | xor_ln131_39  | xor       | auto                     | 0       |
+|     xor_ln132_39_fu_1045_p2                                        |     |        | xor_ln132_39  | xor       | auto                     | 0       |
+|     xor_ln131_40_fu_1059_p2                                        |     |        | xor_ln131_40  | xor       | auto                     | 0       |
+|     xor_ln132_40_fu_1065_p2                                        |     |        | xor_ln132_40  | xor       | auto                     | 0       |
+|     xor_ln131_41_fu_1079_p2                                        |     |        | xor_ln131_41  | xor       | auto                     | 0       |
+|     xor_ln132_41_fu_1085_p2                                        |     |        | xor_ln132_41  | xor       | auto                     | 0       |
+|     xor_ln131_42_fu_1099_p2                                        |     |        | xor_ln131_42  | xor       | auto                     | 0       |
+|     xor_ln132_42_fu_1105_p2                                        |     |        | xor_ln132_42  | xor       | auto                     | 0       |
+|     xor_ln131_43_fu_1119_p2                                        |     |        | xor_ln131_43  | xor       | auto                     | 0       |
+|     xor_ln132_43_fu_1125_p2                                        |     |        | xor_ln132_43  | xor       | auto                     | 0       |
+|     xor_ln131_44_fu_1139_p2                                        |     |        | xor_ln131_44  | xor       | auto                     | 0       |
+|     xor_ln132_44_fu_1145_p2                                        |     |        | xor_ln132_44  | xor       | auto                     | 0       |
+|     xor_ln131_45_fu_1159_p2                                        |     |        | xor_ln131_45  | xor       | auto                     | 0       |
+|     xor_ln132_45_fu_1165_p2                                        |     |        | xor_ln132_45  | xor       | auto                     | 0       |
+|     xor_ln131_46_fu_1179_p2                                        |     |        | xor_ln131_46  | xor       | auto                     | 0       |
+|     xor_ln132_46_fu_1185_p2                                        |     |        | xor_ln132_46  | xor       | auto                     | 0       |
+|     xor_ln131_47_fu_1199_p2                                        |     |        | xor_ln131_47  | xor       | auto                     | 0       |
+|     xor_ln132_47_fu_1205_p2                                        |     |        | xor_ln132_47  | xor       | auto                     | 0       |
+|     xor_ln131_48_fu_1219_p2                                        |     |        | xor_ln131_48  | xor       | auto                     | 0       |
+|     xor_ln132_48_fu_1225_p2                                        |     |        | xor_ln132_48  | xor       | auto                     | 0       |
+|     xor_ln131_49_fu_1239_p2                                        |     |        | xor_ln131_49  | xor       | auto                     | 0       |
+|     xor_ln132_49_fu_1245_p2                                        |     |        | xor_ln132_49  | xor       | auto                     | 0       |
+|     xor_ln131_50_fu_1259_p2                                        |     |        | xor_ln131_50  | xor       | auto                     | 0       |
+|     xor_ln132_50_fu_1265_p2                                        |     |        | xor_ln132_50  | xor       | auto                     | 0       |
+|     xor_ln131_51_fu_1279_p2                                        |     |        | xor_ln131_51  | xor       | auto                     | 0       |
+|     xor_ln132_51_fu_1285_p2                                        |     |        | xor_ln132_51  | xor       | auto                     | 0       |
+|     xor_ln131_52_fu_1299_p2                                        |     |        | xor_ln131_52  | xor       | auto                     | 0       |
+|     xor_ln132_52_fu_1305_p2                                        |     |        | xor_ln132_52  | xor       | auto                     | 0       |
+|     xor_ln131_53_fu_1319_p2                                        |     |        | xor_ln131_53  | xor       | auto                     | 0       |
+|     xor_ln132_53_fu_1325_p2                                        |     |        | xor_ln132_53  | xor       | auto                     | 0       |
+|     xor_ln131_54_fu_1339_p2                                        |     |        | xor_ln131_54  | xor       | auto                     | 0       |
+|     xor_ln132_54_fu_1345_p2                                        |     |        | xor_ln132_54  | xor       | auto                     | 0       |
+|     xor_ln131_55_fu_1359_p2                                        |     |        | xor_ln131_55  | xor       | auto                     | 0       |
+|     xor_ln132_55_fu_1365_p2                                        |     |        | xor_ln132_55  | xor       | auto                     | 0       |
+|     xor_ln131_56_fu_1379_p2                                        |     |        | xor_ln131_56  | xor       | auto                     | 0       |
+|     xor_ln132_56_fu_1385_p2                                        |     |        | xor_ln132_56  | xor       | auto                     | 0       |
+|     xor_ln131_57_fu_1399_p2                                        |     |        | xor_ln131_57  | xor       | auto                     | 0       |
+|     xor_ln132_57_fu_1405_p2                                        |     |        | xor_ln132_57  | xor       | auto                     | 0       |
+|     xor_ln131_58_fu_1419_p2                                        |     |        | xor_ln131_58  | xor       | auto                     | 0       |
+|     xor_ln132_58_fu_1425_p2                                        |     |        | xor_ln132_58  | xor       | auto                     | 0       |
+|     xor_ln131_59_fu_1439_p2                                        |     |        | xor_ln131_59  | xor       | auto                     | 0       |
+|     xor_ln132_59_fu_1445_p2                                        |     |        | xor_ln132_59  | xor       | auto                     | 0       |
+|     xor_ln131_60_fu_1459_p2                                        |     |        | xor_ln131_60  | xor       | auto                     | 0       |
+|     xor_ln132_60_fu_1465_p2                                        |     |        | xor_ln132_60  | xor       | auto                     | 0       |
+|     xor_ln131_61_fu_1479_p2                                        |     |        | xor_ln131_61  | xor       | auto                     | 0       |
+|     xor_ln132_61_fu_1485_p2                                        |     |        | xor_ln132_61  | xor       | auto                     | 0       |
+|     xor_ln131_62_fu_1499_p2                                        |     |        | xor_ln131_62  | xor       | auto                     | 0       |
+|     xor_ln132_62_fu_1638_p2                                        |     |        | xor_ln132_62  | xor       | auto                     | 0       |
+|    + kpad_32_64_256_32_64_sha256_wrapper_Pipeline_VITIS_LOOP_120_2 | 0   |        |               |           |                          |         |
+|      icmp_ln120_fu_80_p2                                           |     |        | icmp_ln120    | seteq     | auto                     | 0       |
+|      i_9_fu_86_p2                                                  |     |        | i_9           | add       | fabric                   | 0       |
+|   + msgHash_32_64_256_32_64_sha256_wrapper_s                       | 0   |        |               |           |                          |         |
+|    + mergeKipad_32_64_256_64_s                                     | 0   |        |               |           |                          |         |
+|      mergeKipadLenStrm_din                                         |     |        | mergeKipadLen | add       | fabric                   | 0       |
+|      add_ln171_fu_161_p2                                           |     |        | add_ln171     | add       | fabric                   | 0       |
+|     + mergeKipad_32_64_256_64_Pipeline_VITIS_LOOP_162_2            | 0   |        |               |           |                          |         |
+|       icmp_ln162_fu_84_p2                                          |     |        | icmp_ln162    | seteq     | auto                     | 0       |
+|       i_8_fu_90_p2                                                 |     |        | i_8           | add       | fabric                   | 0       |
+|     + mergeKipad_32_64_256_64_Pipeline_VITIS_LOOP_171_3            | 0   |        |               |           |                          |         |
+|       icmp_ln171_fu_74_p2                                          |     |        | icmp_ln171    | seteq     | auto                     | 0       |
+|       add_ln171_fu_79_p2                                           |     |        | add_ln171     | add       | fabric                   | 0       |
+|    + hash                                                          | 0   |        |               |           |                          |         |
+|     + sha256_top_32_256_s (grp_sha256_top_32_256_s_fu_32)          | 0   |        |               |           |                          |         |
+|      + preProcessing (preProcessing_U0)                            | 0   |        |               |           |                          |         |
+|        icmp_ln95_fu_5045_p2                                        |     |        | icmp_ln95     | setgt     | auto                     | 0       |
+|        select_ln95_fu_5050_p3                                      |     |        | select_ln95   | select    | auto_sel                 | 0       |
+|        blk_num_fu_5058_p2                                          |     |        | blk_num       | add       | fabric                   | 0       |
+|        icmp_ln101_fu_5076_p2                                       |     |        | icmp_ln101    | seteq     | auto                     | 0       |
+|        add_ln101_fu_5081_p2                                        |     |        | add_ln101     | add       | fabric                   | 0       |
+|        icmp_ln108_fu_5087_p2                                       |     |        | icmp_ln108    | seteq     | auto                     | 0       |
+|        select_ln101_fu_5093_p3                                     |     |        | select_ln101  | select    | auto_sel                 | 0       |
+|        add_ln108_fu_5105_p2                                        |     |        | add_ln108     | add       | fabric                   | 0       |
+|        icmp_ln108_1_fu_5111_p2                                     |     |        | icmp_ln108_1  | seteq     | auto                     | 0       |
+|        icmp_ln128_fu_5189_p2                                       |     |        | icmp_ln128    | seteq     | auto                     | 0       |
+|        icmp_ln151_fu_5194_p2                                       |     |        | icmp_ln151    | setlt     | auto                     | 0       |
+|        cmp275_fu_5276_p2                                           |     |        | cmp275        | seteq     | auto                     | 0       |
+|        cmp281_fu_5281_p2                                           |     |        | cmp281        | seteq     | auto                     | 0       |
+|        cmp298_fu_5286_p2                                           |     |        | cmp298        | seteq     | auto                     | 0       |
+|        icmp_ln214_fu_5291_p2                                       |     |        | icmp_ln214    | seteq     | auto                     | 0       |
+|        icmp_ln222_fu_5354_p2                                       |     |        | icmp_ln222    | setne     | auto                     | 0       |
+|        or_ln222_fu_5359_p2                                         |     |        | or_ln222      | or        | auto                     | 0       |
+|        select_ln222_fu_5363_p3                                     |     |        | select_ln222  | select    | auto_sel                 | 0       |
+|        icmp_ln171_fu_5492_p2                                       |     |        | icmp_ln171    | seteq     | auto                     | 0       |
+|        icmp_ln161_fu_5498_p2                                       |     |        | icmp_ln161    | setlt     | auto                     | 0       |
+|        i_2_fu_5503_p2                                              |     |        | i_2           | add       | fabric                   | 0       |
+|        icmp_ln169_fu_5509_p2                                       |     |        | icmp_ln169    | setgt     | auto                     | 0       |
+|      + generateMsgSchedule (generateMsgSchedule_U0)                | 0   |        |               |           |                          |         |
+|        icmp_ln557_fu_1515_p2                                       |     |        | icmp_ln557    | seteq     | auto                     | 0       |
+|        i_fu_1520_p2                                                |     |        | i             | add       | fabric                   | 0       |
+|        sparsemux_33_4_32_1_1_U47                                   |     |        | w0            | sparsemux | compactencoding_dontcare | 0       |
+|        t_fu_1753_p2                                                |     |        | t             | add       | fabric                   | 0       |
+|        icmp_ln569_fu_1759_p2                                       |     |        | icmp_ln569    | seteq     | auto                     | 0       |
+|        xor_ln595_fu_1869_p2                                        |     |        | xor_ln595     | xor       | auto                     | 0       |
+|        xor_ln595_1_fu_1875_p2                                      |     |        | xor_ln595_1   | xor       | auto                     | 0       |
+|        tA_fu_1881_p2                                               |     | yes    | tA            | add       | fabric                   | 0       |
+|        xor_ln597_fu_1903_p2                                        |     |        | xor_ln597     | xor       | auto                     | 0       |
+|        xor_ln597_1_fu_1909_p2                                      |     |        | xor_ln597_1   | xor       | auto                     | 0       |
+|        tB_fu_1915_p2                                               |     | yes    | tB            | add       | fabric                   | 0       |
+|        wt_fu_1921_p2                                               |     | yes    | wt            | add       | fabric                   | 0       |
+|        t_1_fu_1928_p2                                              |     |        | t_1           | add       | fabric                   | 0       |
+|        icmp_ln579_fu_1938_p2                                       |     |        | icmp_ln579    | seteq     | auto                     | 0       |
+|      + sha256Digest_256_s (sha256Digest_256_U0)                    | 0   |        |               |           |                          |         |
+|        icmp_ln782_fu_406_p2                                        |     |        | icmp_ln782    | seteq     | auto                     | 0       |
+|        n_1_fu_411_p2                                               |     |        | n_1           | add       | fabric                   | 0       |
+|        t_fu_758_p2                                                 |     |        | t             | add       | fabric                   | 0       |
+|        icmp_ln802_fu_769_p2                                        |     |        | icmp_ln802    | seteq     | auto                     | 0       |
+|        add_ln811_fu_807_p2                                         |     |        | add_ln811     | add       | fabric                   | 0       |
+|        add_ln812_fu_812_p2                                         |     |        | add_ln812     | add       | fabric                   | 0       |
+|        add_ln813_fu_817_p2                                         |     |        | add_ln813     | add       | fabric                   | 0       |
+|        add_ln814_fu_822_p2                                         |     |        | add_ln814     | add       | fabric                   | 0       |
+|        add_ln815_fu_827_p2                                         |     |        | add_ln815     | add       | fabric                   | 0       |
+|        add_ln816_fu_832_p2                                         |     |        | add_ln816     | add       | fabric                   | 0       |
+|        add_ln817_fu_837_p2                                         |     |        | add_ln817     | add       | fabric                   | 0       |
+|        add_ln818_fu_842_p2                                         |     |        | add_ln818     | add       | fabric                   | 0       |
+|       + sha256_iter_val (call_ret_sha256_iter_val_fu_383)          | 0   |        |               |           |                          |         |
+|         xor_ln683_fu_214_p2                                        |     |        | xor_ln683     | xor       | auto                     | 0       |
+|         s1_fu_220_p2                                               |     |        | s1            | xor       | auto                     | 0       |
+|         xor_ln689_fu_292_p2                                        |     |        | xor_ln689     | xor       | auto                     | 0       |
+|         s0_fu_298_p2                                               |     |        | s0            | xor       | auto                     | 0       |
+|         fg_x_fu_304_p2                                             |     |        | fg_x          | xor       | auto                     | 0       |
+|         and_ln693_fu_310_p2                                        |     |        | and_ln693     | and       | auto                     | 0       |
+|         ch_fu_316_p2                                               |     |        | ch            | xor       | auto                     | 0       |
+|         bc_x_fu_322_p2                                             |     |        | bc_x          | xor       | auto                     | 0       |
+|         and_ln696_fu_328_p2                                        |     |        | and_ln696     | and       | auto                     | 0       |
+|         and_ln696_1_fu_334_p2                                      |     |        | and_ln696_1   | and       | auto                     | 0       |
+|         maj_fu_340_p2                                              |     |        | maj           | xor       | auto                     | 0       |
+|         t1_a_fu_346_p2                                             |     | yes    | t1_a          | add       | fabric                   | 0       |
+|         t1_b_fu_352_p2                                             |     | yes    | t1_b          | add       | fabric                   | 0       |
+|         t1_bs_fu_358_p2                                            |     | yes    | t1_bs         | add       | fabric                   | 0       |
+|         T1_fu_364_p2                                               |     | yes    | T1            | add       | fabric                   | 0       |
+|         T2_fu_370_p2                                               |     | yes    | T2            | add       | fabric                   | 0       |
+|         add_ln714_fu_376_p2                                        |     | yes    | add_ln714     | add       | fabric                   | 0       |
+|         add_ln719_fu_382_p2                                        |     | yes    | add_ln719     | add       | fabric                   | 0       |
+|   + resHash_32_64_256_32_64_sha256_wrapper_s                       | 0   |        |               |           |                          |         |
+|    + mergeKopad_32_64_256_32_64_s                                  | 0   |        |               |           |                          |         |
+|     + mergeKopad_32_64_256_32_64_Pipeline_VITIS_LOOP_221_2         | 0   |        |               |           |                          |         |
+|       icmp_ln221_fu_84_p2                                          |     |        | icmp_ln221    | seteq     | auto                     | 0       |
+|       i_6_fu_90_p2                                                 |     |        | i_6           | add       | fabric                   | 0       |
+|     + mergeKopad_32_64_256_32_64_Pipeline_VITIS_LOOP_227_3         | 0   |        |               |           |                          |         |
+|       icmp_ln227_fu_84_p2                                          |     |        | icmp_ln227    | seteq     | auto                     | 0       |
+|       i_4_fu_90_p2                                                 |     |        | i_4           | add       | fabric                   | 0       |
+|    + hash_1                                                        | 0   |        |               |           |                          |         |
+|     + sha256_top_32_256_s (grp_sha256_top_32_256_s_fu_32)          | 0   |        |               |           |                          |         |
+|      + preProcessing (preProcessing_U0)                            | 0   |        |               |           |                          |         |
+|        icmp_ln95_fu_5045_p2                                        |     |        | icmp_ln95     | setgt     | auto                     | 0       |
+|        select_ln95_fu_5050_p3                                      |     |        | select_ln95   | select    | auto_sel                 | 0       |
+|        blk_num_fu_5058_p2                                          |     |        | blk_num       | add       | fabric                   | 0       |
+|        icmp_ln101_fu_5076_p2                                       |     |        | icmp_ln101    | seteq     | auto                     | 0       |
+|        add_ln101_fu_5081_p2                                        |     |        | add_ln101     | add       | fabric                   | 0       |
+|        icmp_ln108_fu_5087_p2                                       |     |        | icmp_ln108    | seteq     | auto                     | 0       |
+|        select_ln101_fu_5093_p3                                     |     |        | select_ln101  | select    | auto_sel                 | 0       |
+|        add_ln108_fu_5105_p2                                        |     |        | add_ln108     | add       | fabric                   | 0       |
+|        icmp_ln108_1_fu_5111_p2                                     |     |        | icmp_ln108_1  | seteq     | auto                     | 0       |
+|        icmp_ln128_fu_5189_p2                                       |     |        | icmp_ln128    | seteq     | auto                     | 0       |
+|        icmp_ln151_fu_5194_p2                                       |     |        | icmp_ln151    | setlt     | auto                     | 0       |
+|        cmp275_fu_5276_p2                                           |     |        | cmp275        | seteq     | auto                     | 0       |
+|        cmp281_fu_5281_p2                                           |     |        | cmp281        | seteq     | auto                     | 0       |
+|        cmp298_fu_5286_p2                                           |     |        | cmp298        | seteq     | auto                     | 0       |
+|        icmp_ln214_fu_5291_p2                                       |     |        | icmp_ln214    | seteq     | auto                     | 0       |
+|        icmp_ln222_fu_5354_p2                                       |     |        | icmp_ln222    | setne     | auto                     | 0       |
+|        or_ln222_fu_5359_p2                                         |     |        | or_ln222      | or        | auto                     | 0       |
+|        select_ln222_fu_5363_p3                                     |     |        | select_ln222  | select    | auto_sel                 | 0       |
+|        icmp_ln171_fu_5492_p2                                       |     |        | icmp_ln171    | seteq     | auto                     | 0       |
+|        icmp_ln161_fu_5498_p2                                       |     |        | icmp_ln161    | setlt     | auto                     | 0       |
+|        i_2_fu_5503_p2                                              |     |        | i_2           | add       | fabric                   | 0       |
+|        icmp_ln169_fu_5509_p2                                       |     |        | icmp_ln169    | setgt     | auto                     | 0       |
+|      + generateMsgSchedule (generateMsgSchedule_U0)                | 0   |        |               |           |                          |         |
+|        icmp_ln557_fu_1515_p2                                       |     |        | icmp_ln557    | seteq     | auto                     | 0       |
+|        i_fu_1520_p2                                                |     |        | i             | add       | fabric                   | 0       |
+|        sparsemux_33_4_32_1_1_U47                                   |     |        | w0            | sparsemux | compactencoding_dontcare | 0       |
+|        t_fu_1753_p2                                                |     |        | t             | add       | fabric                   | 0       |
+|        icmp_ln569_fu_1759_p2                                       |     |        | icmp_ln569    | seteq     | auto                     | 0       |
+|        xor_ln595_fu_1869_p2                                        |     |        | xor_ln595     | xor       | auto                     | 0       |
+|        xor_ln595_1_fu_1875_p2                                      |     |        | xor_ln595_1   | xor       | auto                     | 0       |
+|        tA_fu_1881_p2                                               |     | yes    | tA            | add       | fabric                   | 0       |
+|        xor_ln597_fu_1903_p2                                        |     |        | xor_ln597     | xor       | auto                     | 0       |
+|        xor_ln597_1_fu_1909_p2                                      |     |        | xor_ln597_1   | xor       | auto                     | 0       |
+|        tB_fu_1915_p2                                               |     | yes    | tB            | add       | fabric                   | 0       |
+|        wt_fu_1921_p2                                               |     | yes    | wt            | add       | fabric                   | 0       |
+|        t_1_fu_1928_p2                                              |     |        | t_1           | add       | fabric                   | 0       |
+|        icmp_ln579_fu_1938_p2                                       |     |        | icmp_ln579    | seteq     | auto                     | 0       |
+|      + sha256Digest_256_s (sha256Digest_256_U0)                    | 0   |        |               |           |                          |         |
+|        icmp_ln782_fu_406_p2                                        |     |        | icmp_ln782    | seteq     | auto                     | 0       |
+|        n_1_fu_411_p2                                               |     |        | n_1           | add       | fabric                   | 0       |
+|        t_fu_758_p2                                                 |     |        | t             | add       | fabric                   | 0       |
+|        icmp_ln802_fu_769_p2                                        |     |        | icmp_ln802    | seteq     | auto                     | 0       |
+|        add_ln811_fu_807_p2                                         |     |        | add_ln811     | add       | fabric                   | 0       |
+|        add_ln812_fu_812_p2                                         |     |        | add_ln812     | add       | fabric                   | 0       |
+|        add_ln813_fu_817_p2                                         |     |        | add_ln813     | add       | fabric                   | 0       |
+|        add_ln814_fu_822_p2                                         |     |        | add_ln814     | add       | fabric                   | 0       |
+|        add_ln815_fu_827_p2                                         |     |        | add_ln815     | add       | fabric                   | 0       |
+|        add_ln816_fu_832_p2                                         |     |        | add_ln816     | add       | fabric                   | 0       |
+|        add_ln817_fu_837_p2                                         |     |        | add_ln817     | add       | fabric                   | 0       |
+|        add_ln818_fu_842_p2                                         |     |        | add_ln818     | add       | fabric                   | 0       |
+|       + sha256_iter_val (call_ret_sha256_iter_val_fu_383)          | 0   |        |               |           |                          |         |
+|         xor_ln683_fu_214_p2                                        |     |        | xor_ln683     | xor       | auto                     | 0       |
+|         s1_fu_220_p2                                               |     |        | s1            | xor       | auto                     | 0       |
+|         xor_ln689_fu_292_p2                                        |     |        | xor_ln689     | xor       | auto                     | 0       |
+|         s0_fu_298_p2                                               |     |        | s0            | xor       | auto                     | 0       |
+|         fg_x_fu_304_p2                                             |     |        | fg_x          | xor       | auto                     | 0       |
+|         and_ln693_fu_310_p2                                        |     |        | and_ln693     | and       | auto                     | 0       |
+|         ch_fu_316_p2                                               |     |        | ch            | xor       | auto                     | 0       |
+|         bc_x_fu_322_p2                                             |     |        | bc_x          | xor       | auto                     | 0       |
+|         and_ln696_fu_328_p2                                        |     |        | and_ln696     | and       | auto                     | 0       |
+|         and_ln696_1_fu_334_p2                                      |     |        | and_ln696_1   | and       | auto                     | 0       |
+|         maj_fu_340_p2                                              |     |        | maj           | xor       | auto                     | 0       |
+|         t1_a_fu_346_p2                                             |     | yes    | t1_a          | add       | fabric                   | 0       |
+|         t1_b_fu_352_p2                                             |     | yes    | t1_b          | add       | fabric                   | 0       |
+|         t1_bs_fu_358_p2                                            |     | yes    | t1_bs         | add       | fabric                   | 0       |
+|         T1_fu_364_p2                                               |     | yes    | T1            | add       | fabric                   | 0       |
+|         T2_fu_370_p2                                               |     | yes    | T2            | add       | fabric                   | 0       |
+|         add_ln714_fu_376_p2                                        |     | yes    | add_ln714     | add       | fabric                   | 0       |
+|         add_ln719_fu_382_p2                                        |     | yes    | add_ln719     | add       | fabric                   | 0       |
++--------------------------------------------------------------------+-----+--------+---------------+-----------+--------------------------+---------+
+
+
+================================================================
+== Storage Report
+================================================================
++-----------------------------------------------------------+--------------+--------+------+------+--------+--------------------+--------+---------+------------------+
+| Name                                                      | Usage        | Type   | BRAM | URAM | Pragma | Variable           | Impl   | Latency | Bitwidth, Depth, |
+|                                                           |              |        |      |      |        |                    |        |         | Banks            |
++-----------------------------------------------------------+--------------+--------+------+------+--------+--------------------+--------+---------+------------------+
+| + test_hmac_sha256                                        |              |        | 145  | 0    |        |                    |        |         |                  |
+|  + hmacDataflow_32_64_256_32_64_sha256_wrapper_s          |              |        | 145  | 0    |        |                    |        |         |                  |
+|    kipadStrm_U                                            | fifo channel | stream | 29   |      |        | kipadStrm          | bram   | 0       | 512, 16, 1       |
+|    kopadStrm_U                                            | fifo channel | stream | 29   |      |        | kopadStrm          | bram   | 0       | 512, 16, 1       |
+|    eKipadStrm_U                                           | fifo channel | stream |      |      |        | eKipadStrm         | lutram | 0       | 1, 8, 1          |
+|    kopad2Strm_U                                           | fifo channel | stream | 29   |      |        | kopad2Strm         | bram   | 0       | 512, 16, 1       |
+|    msgHashStrm_U                                          | fifo channel | stream |      |      |        | msgHashStrm        | lutram | 0       | 256, 16, 1       |
+|    eMsgHashStrm_U                                         | fifo channel | stream |      |      |        | eMsgHashStrm       | lutram | 0       | 1, 8, 1          |
+|   + msgHash_32_64_256_32_64_sha256_wrapper_s              |              |        | 29   | 0    |        |                    |        |         |                  |
+|     mergeKipadStrm_U                                      | fifo channel | stream |      |      |        | mergeKipadStrm     | lutram | 0       | 32, 32, 1        |
+|     mergeKipadLenStrm_U                                   | fifo channel | stream |      |      |        | mergeKipadLenStrm  | lutram | 0       | 64, 8, 1         |
+|     eMergeKipadLenStrm_U                                  | fifo channel | stream |      |      |        | eMergeKipadLenStrm | lutram | 0       | 1, 8, 1          |
+|    + hash                                                 |              |        | 29   | 0    |        |                    |        |         |                  |
+|     + sha256_top_32_256_s (grp_sha256_top_32_256_s_fu_32) |              |        | 29   | 0    |        |                    |        |         |                  |
+|       blk_strm_U                                          | fifo channel | stream | 29   |      |        | blk_strm           | bram   | 0       | 512, 128, 1      |
+|       nblk_strm_U                                         | fifo channel | stream |      |      |        | nblk_strm          | lutram | 0       | 64, 64, 1        |
+|       end_nblk_strm_U                                     | fifo channel | stream |      |      |        | end_nblk_strm      | lutram | 0       | 1, 64, 1         |
+|       nblk_strm1_U                                        | fifo channel | stream |      |      |        | nblk_strm1         | lutram | 0       | 64, 64, 1        |
+|       end_nblk_strm1_U                                    | fifo channel | stream |      |      |        | end_nblk_strm1     | lutram | 0       | 1, 64, 1         |
+|       nblk_strm2_U                                        | fifo channel | stream |      |      |        | nblk_strm2         | lutram | 0       | 64, 64, 1        |
+|       end_nblk_strm2_U                                    | fifo channel | stream |      |      |        | end_nblk_strm2     | lutram | 0       | 1, 64, 1         |
+|       w_strm_U                                            | fifo channel | stream |      |      |        | w_strm             | lutram | 0       | 32, 160, 1       |
+|      + dup_strm (dup_strm_U0)                             |              |        | 0    | 0    |        |                    |        |         |                  |
+|        mid_e_U                                            | fifo channel | stream |      |      |        | mid_e              | srl    | 0       | 1, 8, 1          |
+|        mid_v_U                                            | fifo channel | stream |      |      |        | mid_v              | srl    | 0       | 64, 8, 1         |
+|      + sha256Digest_256_s (sha256Digest_256_U0)           |              |        | 0    | 0    |        |                    |        |         |                  |
+|        K_U                                                | rom_1p       |        |      |      | pragma | K                  | lutram | 1       | 32, 64, 1        |
+|   + resHash_32_64_256_32_64_sha256_wrapper_s              |              |        | 29   | 0    |        |                    |        |         |                  |
+|     mergeKopadStrm_U                                      | fifo channel | stream |      |      |        | mergeKopadStrm     | lutram | 0       | 32, 32, 1        |
+|     mergeKopadLenStrm_U                                   | fifo channel | stream |      |      |        | mergeKopadLenStrm  | lutram | 0       | 64, 8, 1         |
+|     eMergeKopadLenStrm_U                                  | fifo channel | stream |      |      |        | eMergeKopadLenStrm | lutram | 0       | 1, 8, 1          |
+|    + hash_1                                               |              |        | 29   | 0    |        |                    |        |         |                  |
+|     + sha256_top_32_256_s (grp_sha256_top_32_256_s_fu_32) |              |        | 29   | 0    |        |                    |        |         |                  |
+|       blk_strm_U                                          | fifo channel | stream | 29   |      |        | blk_strm           | bram   | 0       | 512, 128, 1      |
+|       nblk_strm_U                                         | fifo channel | stream |      |      |        | nblk_strm          | lutram | 0       | 64, 64, 1        |
+|       end_nblk_strm_U                                     | fifo channel | stream |      |      |        | end_nblk_strm      | lutram | 0       | 1, 64, 1         |
+|       nblk_strm1_U                                        | fifo channel | stream |      |      |        | nblk_strm1         | lutram | 0       | 64, 64, 1        |
+|       end_nblk_strm1_U                                    | fifo channel | stream |      |      |        | end_nblk_strm1     | lutram | 0       | 1, 64, 1         |
+|       nblk_strm2_U                                        | fifo channel | stream |      |      |        | nblk_strm2         | lutram | 0       | 64, 64, 1        |
+|       end_nblk_strm2_U                                    | fifo channel | stream |      |      |        | end_nblk_strm2     | lutram | 0       | 1, 64, 1         |
+|       w_strm_U                                            | fifo channel | stream |      |      |        | w_strm             | lutram | 0       | 32, 160, 1       |
+|      + dup_strm (dup_strm_U0)                             |              |        | 0    | 0    |        |                    |        |         |                  |
+|        mid_e_U                                            | fifo channel | stream |      |      |        | mid_e              | srl    | 0       | 1, 8, 1          |
+|        mid_v_U                                            | fifo channel | stream |      |      |        | mid_v              | srl    | 0       | 64, 8, 1         |
+|      + sha256Digest_256_s (sha256Digest_256_U0)           |              |        | 0    | 0    |        |                    |        |         |                  |
+|        K_U                                                | rom_1p       |        |      |      | pragma | K                  | lutram | 1       | 32, 64, 1        |
++-----------------------------------------------------------+--------------+--------+------+------+--------+--------------------+--------+---------+------------------+
+
+
+================================================================
+== Pragma Report
+================================================================
+* Pragmas with Warnings
++----------+--------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Type     | Options                                          | Location                                                      | Messages                                                                                                                                                                           |
++----------+--------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| resource | variable = eKeyStrm core = FIFO_LUTRAM           | ../../../include/xf_security/hmac.hpp:91 in kpadhash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = keyLenStrm core = FIFO_LUTRAM         | ../../../include/xf_security/hmac.hpp:94 in kpadhash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = keyHashStrm core = FIFO_LUTRAM        | ../../../include/xf_security/hmac.hpp:97 in kpadhash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = ekeyHashStrm core = FIFO_LUTRAM       | ../../../include/xf_security/hmac.hpp:100 in kpadhash         | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = mergeKipadStrm core = FIFO_LUTRAM     | ../../../include/xf_security/hmac.hpp:192 in msghash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = mergeKipadLenStrm core = FIFO_LUTRAM  | ../../../include/xf_security/hmac.hpp:195 in msghash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = eMergeKipadLenStrm core = FIFO_LUTRAM | ../../../include/xf_security/hmac.hpp:198 in msghash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = mergeKopadStrm core = FIFO_LUTRAM     | ../../../include/xf_security/hmac.hpp:246 in reshash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = mergeKopadLenStrm core = FIFO_LUTRAM  | ../../../include/xf_security/hmac.hpp:249 in reshash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = eMergeKopadLenStrm core = FIFO_LUTRAM | ../../../include/xf_security/hmac.hpp:252 in reshash          | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = eKipadStrm core = FIFO_LUTRAM         | ../../../include/xf_security/hmac.hpp:270 in hmacdataflow     | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = kipadStrm core = FIFO_BRAM            | ../../../include/xf_security/hmac.hpp:274 in hmacdataflow     | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = kopadStrm core = FIFO_BRAM            | ../../../include/xf_security/hmac.hpp:277 in hmacdataflow     | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = kopad2Strm core = FIFO_BRAM           | ../../../include/xf_security/hmac.hpp:280 in hmacdataflow     | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = msgHashStrm core = FIFO_LUTRAM        | ../../../include/xf_security/hmac.hpp:284 in hmacdataflow     | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = eMsgHashStrm core = FIFO_LUTRAM       | ../../../include/xf_security/hmac.hpp:287 in hmacdataflow     | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| dataflow |                                                  | ../../../include/xf_security/sha224_256.hpp:503 in dup_strm   | Since the only kind of statements allowed in a canonical dataflow region are variable declarations and function calls, the compiler may not be able to correctly handle the region |
+| resource | variable = blk_strm core = FIFO_BRAM             | ../../../include/xf_security/sha224_256.hpp:880 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = nblk_strm core = FIFO_LUTRAM          | ../../../include/xf_security/sha224_256.hpp:885 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = nblk_strm1 core = FIFO_LUTRAM         | ../../../include/xf_security/sha224_256.hpp:888 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = nblk_strm2 core = FIFO_LUTRAM         | ../../../include/xf_security/sha224_256.hpp:891 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = end_nblk_strm core = FIFO_LUTRAM      | ../../../include/xf_security/sha224_256.hpp:896 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = end_nblk_strm1 core = FIFO_LUTRAM     | ../../../include/xf_security/sha224_256.hpp:899 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = end_nblk_strm2 core = FIFO_LUTRAM     | ../../../include/xf_security/sha224_256.hpp:902 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
+| resource | variable = w_strm core = FIFO_LUTRAM             | ../../../include/xf_security/sha224_256.hpp:908 in sha256_top | 'Resource pragma' is deprecated, use 'bind_op/bind_storage pragma' instead                                                                                                         |
++----------+--------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+* Valid Pragma Syntax
++-----------------+------------------------------------------+----------------------------------------------------------------------------+
+| Type            | Options                                  | Location                                                                   |
++-----------------+------------------------------------------+----------------------------------------------------------------------------+
+| pipeline        | II = 1                                   | ../../../include/xf_security/hmac.hpp:58 in genpad                         |
+| unroll          |                                          | ../../../include/xf_security/hmac.hpp:65 in genpad                         |
+| unroll          |                                          | ../../../include/xf_security/hmac.hpp:70 in genpad                         |
+| dataflow        |                                          | ../../../include/xf_security/hmac.hpp:87 in kpadhash                       |
+| stream          | variable = eKeyStrm depth = 4            | ../../../include/xf_security/hmac.hpp:90 in kpadhash                       |
+| stream          | variable = keyLenStrm depth = 4          | ../../../include/xf_security/hmac.hpp:93 in kpadhash                       |
+| stream          | variable = keyHashStrm depth = 4         | ../../../include/xf_security/hmac.hpp:96 in kpadhash                       |
+| stream          | variable = ekeyHashStrm depth = 4        | ../../../include/xf_security/hmac.hpp:99 in kpadhash                       |
+| pipeline        | II = 1                                   | ../../../include/xf_security/hmac.hpp:121 in kpad                          |
+| unroll          |                                          | ../../../include/xf_security/hmac.hpp:130 in kpad                          |
+| pipeline        | II = 1                                   | ../../../include/xf_security/hmac.hpp:163 in mergekipad                    |
+| pipeline        | II = 1                                   | ../../../include/xf_security/hmac.hpp:172 in mergekipad                    |
+| dataflow        |                                          | ../../../include/xf_security/hmac.hpp:188 in msghash                       |
+| stream          | variable = mergeKipadStrm depth = 32     | ../../../include/xf_security/hmac.hpp:191 in msghash                       |
+| stream          | variable = mergeKipadLenStrm depth = 8   | ../../../include/xf_security/hmac.hpp:194 in msghash                       |
+| stream          | variable = eMergeKipadLenStrm depth = 8  | ../../../include/xf_security/hmac.hpp:197 in msghash                       |
+| pipeline        | II = 1                                   | ../../../include/xf_security/hmac.hpp:222 in mergekopad                    |
+| pipeline        | II = 1                                   | ../../../include/xf_security/hmac.hpp:228 in mergekopad                    |
+| dataflow        |                                          | ../../../include/xf_security/hmac.hpp:242 in reshash                       |
+| stream          | variable = mergeKopadStrm depth = 32     | ../../../include/xf_security/hmac.hpp:245 in reshash                       |
+| stream          | variable = mergeKopadLenStrm depth = 8   | ../../../include/xf_security/hmac.hpp:248 in reshash                       |
+| stream          | variable = eMergeKopadLenStrm depth = 8  | ../../../include/xf_security/hmac.hpp:251 in reshash                       |
+| dataflow        |                                          | ../../../include/xf_security/hmac.hpp:267 in hmacdataflow                  |
+| stream          | variable = eKipadStrm depth = 8          | ../../../include/xf_security/hmac.hpp:269 in hmacdataflow                  |
+| stream          | variable = kipadStrm depth = 16          | ../../../include/xf_security/hmac.hpp:273 in hmacdataflow                  |
+| stream          | variable = kopadStrm depth = 16          | ../../../include/xf_security/hmac.hpp:276 in hmacdataflow                  |
+| stream          | variable = kopad2Strm depth = 16         | ../../../include/xf_security/hmac.hpp:279 in hmacdataflow                  |
+| stream          | variable = msgHashStrm depth = 16        | ../../../include/xf_security/hmac.hpp:283 in hmacdataflow                  |
+| stream          | variable = eMsgHashStrm depth = 8        | ../../../include/xf_security/hmac.hpp:286 in hmacdataflow                  |
+| loop_tripcount  | min = 0 max = 1                          | ../../../include/xf_security/sha224_256.hpp:102 in preprocessing           |
+| array_partition | variable = b0.M complete                 | ../../../include/xf_security/sha224_256.hpp:105 in preprocessing           |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:109 in preprocessing           |
+| array_partition | variable = b.M complete                  | ../../../include/xf_security/sha224_256.hpp:133 in preprocessing           |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:140 in preprocessing           |
+| array_partition | variable = b.M complete                  | ../../../include/xf_security/sha224_256.hpp:156 in preprocessing           |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:160 in preprocessing           |
+| array_partition | variable = b.M complete                  | ../../../include/xf_security/sha224_256.hpp:209 in preprocessing           |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:213 in preprocessing           |
+| array_partition | variable = b1.M complete                 | ../../../include/xf_security/sha224_256.hpp:254 in preprocessing           |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:257 in preprocessing           |
+| loop_tripcount  | min = 0 max = 1                          | ../../../include/xf_security/sha224_256.hpp:305 in preprocessing           |
+| array_partition | variable = b0.M complete                 | ../../../include/xf_security/sha224_256.hpp:308 in preprocessing           |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:313 in preprocessing           |
+| array_partition | variable = b.M complete                  | ../../../include/xf_security/sha224_256.hpp:346 in preprocessing           |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:353 in preprocessing           |
+| array_partition | variable = b.M complete                  | ../../../include/xf_security/sha224_256.hpp:370 in preprocessing           |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:374 in preprocessing           |
+| array_partition | variable = b1.M complete                 | ../../../include/xf_security/sha224_256.hpp:474 in preprocessing           |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:477 in preprocessing           |
+| inline          | off                                      | ../../../include/xf_security/sha224_256.hpp:502 in dup_strm                |
+| stream          | variable = mid_v depth = 8               | ../../../include/xf_security/sha224_256.hpp:505 in dup_strm                |
+| stream          | variable = mid_e depth = 8               | ../../../include/xf_security/sha224_256.hpp:507 in dup_strm                |
+| loop_tripcount  | min = 1 max = 1 avg = 1                  | ../../../include/xf_security/sha224_256.hpp:513 in dup_strm                |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:514 in dup_strm                |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:529 in dup_strm                |
+| inline          |                                          | ../../../include/xf_security/sha224_256.hpp:546 in write_w_to_fifo         |
+| latency         | max = 65                                 | ../../../include/xf_security/sha224_256.hpp:558 in generatemsgschedule     |
+| array_partition | variable = blk.M complete                | ../../../include/xf_security/sha224_256.hpp:561 in generatemsgschedule     |
+| array_partition | variable = W complete                    | ../../../include/xf_security/sha224_256.hpp:565 in generatemsgschedule     |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:570 in generatemsgschedule     |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:580 in generatemsgschedule     |
+| dependence      | variable = W inter false                 | ../../../include/xf_security/sha224_256.hpp:581 in generatemsgschedule     |
+| bind_op         | variable=tA op=add impl=fabric           | ../../../include/xf_security/sha224_256.hpp:596 in generatemsgschedule, tA |
+| bind_op         | variable=tB op=add impl=fabric           | ../../../include/xf_security/sha224_256.hpp:598 in generatemsgschedule, tB |
+| bind_op         | variable=wt op=add impl=fabric           | ../../../include/xf_security/sha224_256.hpp:600 in generatemsgschedule, wt |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:604 in generatemsgschedule     |
+| inline          | off                                      | ../../../include/xf_security/sha224_256.hpp:665 in sha256_iter_val         |
+| bind_op         | variable=t1_a op=add impl=fabric         | ../../../include/xf_security/sha224_256.hpp:699 in sha256_iter_val, t1_a   |
+| bind_op         | variable=t1_b op=add impl=fabric         | ../../../include/xf_security/sha224_256.hpp:701 in sha256_iter_val, t1_b   |
+| bind_op         | variable=t1_bs op=add impl=fabric        | ../../../include/xf_security/sha224_256.hpp:703 in sha256_iter_val, t1_bs  |
+| bind_op         | variable=T1 op=add impl=fabric           | ../../../include/xf_security/sha224_256.hpp:705 in sha256_iter_val, T1     |
+| bind_op         | variable=T2 op=add impl=fabric           | ../../../include/xf_security/sha224_256.hpp:708 in sha256_iter_val, T2     |
+| bind_op         | variable=e op=add impl=fabric            | ../../../include/xf_security/sha224_256.hpp:713 in sha256_iter_val, e      |
+| bind_op         | variable=a op=add impl=fabric            | ../../../include/xf_security/sha224_256.hpp:718 in sha256_iter_val, a      |
+| bind_storage    | variable = K type = rom_1p impl = lutram | ../../../include/xf_security/sha224_256.hpp:748 in sha256digest            |
+| array_partition | variable = H complete                    | ../../../include/xf_security/sha224_256.hpp:758 in sha256digest            |
+| loop_tripcount  | min = 1 max = 1                          | ../../../include/xf_security/sha224_256.hpp:783 in sha256digest            |
+| latency         | max = 65                                 | ../../../include/xf_security/sha224_256.hpp:784 in sha256digest            |
+| pipeline        | II = 1 rewind                            | ../../../include/xf_security/sha224_256.hpp:803 in sha256digest            |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:826 in sha256digest            |
+| unroll          |                                          | ../../../include/xf_security/sha224_256.hpp:842 in sha256digest            |
+| dataflow        |                                          | ../../../include/xf_security/sha224_256.hpp:875 in sha256_top              |
+| stream          | variable = blk_strm depth = 128          | ../../../include/xf_security/sha224_256.hpp:878 in sha256_top              |
+| stream          | variable = nblk_strm depth = 64          | ../../../include/xf_security/sha224_256.hpp:884 in sha256_top              |
+| stream          | variable = nblk_strm1 depth = 64         | ../../../include/xf_security/sha224_256.hpp:887 in sha256_top              |
+| stream          | variable = nblk_strm2 depth = 64         | ../../../include/xf_security/sha224_256.hpp:890 in sha256_top              |
+| stream          | variable = end_nblk_strm depth = 64      | ../../../include/xf_security/sha224_256.hpp:895 in sha256_top              |
+| stream          | variable = end_nblk_strm1 depth = 64     | ../../../include/xf_security/sha224_256.hpp:898 in sha256_top              |
+| stream          | variable = end_nblk_strm2 depth = 64     | ../../../include/xf_security/sha224_256.hpp:901 in sha256_top              |
+| stream          | variable = w_strm depth = 160            | ../../../include/xf_security/sha224_256.hpp:906 in sha256_top              |
+| stream          | variable = keyStrm depth = 128           | test.cpp:214 in main                                                       |
+| stream          | variable = lenKeyStrm depth = 128        | test.cpp:216 in main                                                       |
+| stream          | variable = msgStrm depth = 128           | test.cpp:218 in main                                                       |
+| stream          | variable = lenMsgStrm depth = 128        | test.cpp:220 in main                                                       |
+| stream          | variable = endLenStrm depth = 128        | test.cpp:222 in main                                                       |
+| stream          | variable = hshStrm depth = 128           | test.cpp:224 in main                                                       |
+| stream          | variable = endHshStrm depth = 128        | test.cpp:226 in main                                                       |
++-----------------+------------------------------------------+----------------------------------------------------------------------------+
+
+

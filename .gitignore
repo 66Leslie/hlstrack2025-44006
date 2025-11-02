@@ -26,6 +26,11 @@ vivado*.log
 *.str
 *.dir/
 
+# Exception: Allow reports files
+!**/reports/*.rpt
+!**/reports/*.xml
+!**/reports/*.log
+
 # Python
 __pycache__/
 *.pyc

@@ -27,7 +27,7 @@ set PROJ "hmac_sha256_test.prj"
 set SOLN "solution1"
 
 if {![info exists CLKP]} {
-  set CLKP 15.0
+  set CLKP 12.0
 }
 
 open_project -reset $PROJ
@@ -57,10 +57,20 @@ if {$COSIM == 1} {
 }
 
 if {$VIVADO_SYN == 1} {
+  config_export -vivado_synth_design_args {-directive sdx_optimization_effort_high}
+  config_export -vivado_impl_strategy default
+  config_export -vivado_phys_opt auto
+  config_export -vivado_report_level 2
+  config_export -vivado_max_timing_paths 10
   export_design -flow syn -rtl verilog
 }
 
 if {$VIVADO_IMPL == 1} {
+  config_export -vivado_synth_design_args {-directive sdx_optimization_effort_high}
+  config_export -vivado_impl_strategy default
+  config_export -vivado_phys_opt auto
+  config_export -vivado_report_level 2
+  config_export -vivado_max_timing_paths 10
   export_design -flow impl -rtl verilog
 }
 

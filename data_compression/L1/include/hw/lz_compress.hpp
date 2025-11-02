@@ -53,8 +53,8 @@ template <int MATCH_LEN,
           int LZ_MAX_OFFSET_LIMIT,
           int MATCH_LEVEL = 6,
           int MIN_OFFSET = 1,
-          int LZ_DICT_SIZE = 1 << 12,
-          int LEFT_BYTES = 64>
+          int LZ_DICT_SIZE = 1 << 8,
+          int LEFT_BYTES = 32>
 void lzCompress(hls::stream<ap_uint<8> >& inStream, hls::stream<ap_uint<32> >& outStream, uint32_t input_size) {
     const int c_dictEleWidth = (MATCH_LEN * 8 + 24);
     typedef ap_uint<MATCH_LEVEL * c_dictEleWidth> uintDictV_t;
@@ -73,7 +73,7 @@ void lzCompress(hls::stream<ap_uint<8> >& inStream, hls::stream<ap_uint<32> >& o
 dict_flush:
     for (int i = 0; i < LZ_DICT_SIZE; i++) {
 #pragma HLS PIPELINE II = 1
-#pragma HLS UNROLL FACTOR = 2
+#pragma HLS UNROLL FACTOR = 4
         dict[i] = resetValue;
     }
 
@@ -95,16 +95,20 @@ lz_compress:
         }
         present_window[MATCH_LEN - 1] = inStream.read();
 
-        // Calculate Hash Value
+        // Calculate Hash Value (分两级减少组合延迟)
         uint32_t hash = 0;
         if (MIN_MATCH == 3) {
-            hash = (present_window[0] << 4) ^ (present_window[1] << 3) ^ (present_window[2] << 2) ^
-                   (present_window[0] << 1) ^ (present_window[1]);
+            uint32_t h1 = (present_window[0] << 4) ^ (present_window[1] << 3);
+            uint32_t h2 = (present_window[2] << 2) ^ (present_window[0] << 1) ^ (present_window[1]);
+            hash = h1 ^ h2;
         } else {
-            hash = (present_window[0] << 4) ^ (present_window[1] << 3) ^ (present_window[2] << 2) ^ (present_window[3]);
+            uint32_t h1 = (present_window[0] << 4) ^ (present_window[1] << 3);
+            uint32_t h2 = (present_window[2] << 2) ^ (present_window[3]);
+            hash = h1 ^ h2;
         }
 
         // Dictionary Lookup
+        hash &= (LZ_DICT_SIZE - 1);
         uintDictV_t dictReadValue = dict[hash];
         uintDictV_t dictWriteValue = dictReadValue << c_dictEleWidth;
         for (int m = 0; m < MATCH_LEN; m++) {
@@ -187,8 +191,8 @@ template <int MAX_INPUT_SIZE = 64 * 1024,
           int CORE_ID = 0,
           int MATCH_LEVEL = 6,
           int MIN_OFFSET = 1,
-          int LZ_DICT_SIZE = 1 << 12,
-          int LEFT_BYTES = 64>
+          int LZ_DICT_SIZE = 1 << 8,
+          int LEFT_BYTES = 32>
 void lzCompress(hls::stream<IntVectorStream_dt<8, 1> >& inStream, hls::stream<IntVectorStream_dt<32, 1> >& outStream) {
     const uint16_t c_indxBitCnts = 24;
     const uint16_t c_fifo_depth = LEFT_BYTES + 2;
@@ -233,7 +237,7 @@ void lzCompress(hls::stream<IntVectorStream_dt<8, 1> >& inStream, hls::stream<In
         dict_flush:
             for (int i = 0; i < LZ_DICT_SIZE; i++) {
 #pragma HLS PIPELINE II = 1
-#pragma HLS UNROLL FACTOR = 2
+#pragma HLS UNROLL FACTOR = 4
                 dict[i] = resetValue;
             }
             resetDictFlag = false;
@@ -298,6 +302,7 @@ void lzCompress(hls::stream<IntVectorStream_dt<8, 1> >& inStream, hls::stream<In
             }
 
             // Dictionary Lookup
+            hash &= (LZ_DICT_SIZE - 1);
             uintDictV_t dictReadValue = dict[hash];
             uintDictV_t dictWriteValue = dictReadValue << c_dictEleWidth;
             for (int m = 0; m < MATCH_LEN; m++) {

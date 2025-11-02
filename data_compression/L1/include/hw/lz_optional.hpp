@@ -422,7 +422,7 @@ void lzBestMatchFilter(hls::stream<IntVectorStream_dt<32, 1> >& inStream,
  * @param outStream output stream 32bit per write
  *
  */
-template <int MAX_MATCH_LEN, int BLOCKSIZE = 32768, int BOOSTER_OFFSET_WINDOW = 16 * 1024, int LEFT_BYTES = 64>
+template <int MAX_MATCH_LEN, int BLOCKSIZE = 32768, int BOOSTER_OFFSET_WINDOW = 16 * 1024, int LEFT_BYTES = 32>
 void lzBooster(hls::stream<IntVectorStream_dt<32, 1> >& inStream, hls::stream<IntVectorStream_dt<32, 1> >& outStream) {
     constexpr uint16_t c_fifo_depth = LEFT_BYTES + 2;
     constexpr int c_boosterOffsetWindow = (BLOCKSIZE < BOOSTER_OFFSET_WINDOW) ? BLOCKSIZE : BOOSTER_OFFSET_WINDOW;
@@ -554,7 +554,7 @@ void lzBooster(hls::stream<IntVectorStream_dt<32, 1> >& inStream, hls::stream<In
  * @param left_bytes last 64 left over bytes
  *
  */
-template <int MAX_MATCH_LEN, int BOOSTER_OFFSET_WINDOW = 16 * 1024, int LEFT_BYTES = 64>
+template <int MAX_MATCH_LEN, int BOOSTER_OFFSET_WINDOW = 16 * 1024, int LEFT_BYTES = 32>
 void lzBooster(hls::stream<compressd_dt>& inStream, hls::stream<compressd_dt>& outStream, uint32_t input_size) {
     if (input_size == 0) return;
     uint8_t local_mem[BOOSTER_OFFSET_WINDOW];
@@ -633,7 +633,7 @@ lz_booster_left_bytes:
  * @param input_size input stream size
  * @param left_bytes bytes left in block
  */
-template <int LEFT_BYTES = 64>
+template <int LEFT_BYTES = 32>
 static void lzFilter(hls::stream<compressd_dt>& inStream, hls::stream<compressd_dt>& outStream, uint32_t input_size) {
     if (input_size == 0) return;
     uint32_t skip_len = 0;

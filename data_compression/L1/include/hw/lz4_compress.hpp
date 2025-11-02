@@ -121,9 +121,14 @@ static void lz4CompressPart2(hls::stream<uint8_t>& in_lit_inStream,
     bool extra_match_len = false;
     bool readOffsetFlag = true;
     
-    // 优化：预先读取以打破依赖
+    // 读取缓存与延后更新寄存器
     ap_uint<64> nextLenOffsetValue;
+    ap_uint<32> lit_length_cached = 0;
+    ap_uint<16> match_length_cached = 0;
+    ap_uint<16> match_offset_cached = 0;
     ap_uint<16> match_offset_plus_one = 0;
+    bool pending_idx_apply = false;
+    ap_uint<32> pending_idx_increment = 0;
 
 lz4_compress:
     for (uint32_t inIdx = 0; (inIdx < input_size) || (!readOffsetFlag);) {
@@ -133,113 +138,127 @@ lz4_compress:
 #pragma HLS DEPENDENCE variable=match_length inter false
         ap_uint<8> outValue = 0;
 
-        // 优化：将读操作前置，减少关键路径
+        // 统一的 next 寄存器，减少对标志位的多点赋值
+        bool readOffsetFlag_next = readOffsetFlag;
+        bool pending_idx_apply_next = pending_idx_apply;
+        ap_uint<32> pending_idx_increment_next = pending_idx_increment;
+
+        // 若需要读取，则本拍仅执行读取并提前缓存，直接进入下一拍
         if (readOffsetFlag) {
             nextLenOffsetValue = in_lenOffset_Stream.read();
-            readOffsetFlag = false;
+            lit_length_cached = nextLenOffsetValue.range(63, 32);
+            match_length_cached = nextLenOffsetValue.range(15, 0);
+            match_offset_cached = nextLenOffsetValue.range(31, 16);
+            readOffsetFlag_next = false;
+            // 在本拍末统一更新寄存器
+            readOffsetFlag = readOffsetFlag_next;
+            pending_idx_apply = pending_idx_apply_next;
+            pending_idx_increment = pending_idx_increment_next;
+            continue;
         }
 
-        // 使用本地变量缓存，减少位选择操作延迟
-        ap_uint<32> lit_len_tmp = nextLenOffsetValue.range(63, 32);
-        ap_uint<16> match_len_tmp = nextLenOffsetValue.range(15, 0);
-        ap_uint<16> match_off_tmp = nextLenOffsetValue.range(31, 16);
+        // 将 inIdx 的加法延后到独立一拍，避免与读取同拍叠加
+        if (pending_idx_apply) {
+            inIdx += pending_idx_increment;
+            pending_idx_apply_next = false;
+        }
 
-        if (next_state == WRITE_TOKEN) {
-            lit_length = lit_len_tmp;
-            match_length = match_len_tmp;
-            match_offset = match_off_tmp;
-            
-            // 优化：简化 inIdx 更新逻辑
-            uint32_t idx_increment = (uint32_t)match_length + (uint32_t)lit_length + 4;
-            inIdx += idx_increment;
+        // 使用读取时缓存的字段，避免重复位选
+        ap_uint<32> lit_len_tmp = lit_length_cached;
+        ap_uint<16> match_len_tmp = match_length_cached;
+        ap_uint<16> match_off_tmp = match_offset_cached;
 
-            // 优化：合并条件判断，减少分支
-            bool is_special_end = (match_length == 777) && (match_offset == 777);
-            bool is_normal_end = (match_offset == 0) && (match_length == 0);
-            
-            if (is_special_end) {
-                inIdx = input_size;
-                lit_ending = true;
-            }
+        switch (next_state) {
+            case WRITE_TOKEN: {
+                lit_length = lit_len_tmp;
+                match_length = match_len_tmp;
+                match_offset = match_off_tmp;
 
-            lit_len = lit_length;
-            write_lit_length = lit_length;
-            lit_ending = lit_ending || is_normal_end;
-            
-            // 优化：重构条件逻辑，使用三元运算符减少分支
-            bool lit_len_ge_15 = (lit_length >= 15);
-            bool lit_len_gt_0 = (lit_length > 0);
-            
-            outValue.range(7, 4) = lit_len_ge_15 ? (ap_uint<4>)15 : 
-                                   lit_len_gt_0 ? (ap_uint<4>)lit_length : (ap_uint<4>)0;
-            
-            if (lit_len_ge_15) {
-                lit_length -= 15;
-                next_state = WRITE_LIT_LEN;
-                readOffsetFlag = false;
-            } else if (lit_len_gt_0) {
-                lit_length = 0;
-                next_state = WRITE_LITERAL;
-                readOffsetFlag = false;
-            } else {
-                next_state = WRITE_OFFSET0;
-                readOffsetFlag = false;
+                pending_idx_increment_next = (uint32_t)match_length + (uint32_t)lit_length + 4;
+                pending_idx_apply_next = true;
+
+                bool is_special_end = (match_length == 777) && (match_offset == 777);
+                bool is_normal_end = (match_offset == 0) && (match_length == 0);
+                if (is_special_end) {
+                    inIdx = input_size;
+                    lit_ending = true;
+                }
+
+                lit_len = lit_length;
+                write_lit_length = lit_length;
+                lit_ending = lit_ending || is_normal_end;
+
+                bool lit_len_ge_15 = (lit_length >= 15);
+                bool lit_len_gt_0 = (lit_length > 0);
+                outValue.range(7, 4) = lit_len_ge_15 ? (ap_uint<4>)15 : (lit_len_gt_0 ? (ap_uint<4>)lit_length : (ap_uint<4>)0);
+
+                if (lit_len_ge_15) {
+                    lit_length -= 15;
+                    next_state = WRITE_LIT_LEN;
+                    readOffsetFlag_next = false;
+                } else if (lit_len_gt_0) {
+                    lit_length = 0;
+                    next_state = WRITE_LITERAL;
+                    readOffsetFlag_next = false;
+                } else {
+                    next_state = WRITE_OFFSET0;
+                    readOffsetFlag_next = false;
+                }
+
+                bool match_len_ge_15 = (match_length >= 15);
+                outValue.range(3, 0) = match_len_ge_15 ? (ap_uint<4>)15 : (ap_uint<4>)match_length;
+                if (match_len_ge_15) {
+                    match_length -= 15;
+                    extra_match_len = true;
+                } else {
+                    match_length = 0;
+                    extra_match_len = false;
+                }
+                match_offset_plus_one = match_offset + 1;
+                break;
             }
-            
-            bool match_len_ge_15 = (match_length >= 15);
-            outValue.range(3, 0) = match_len_ge_15 ? (ap_uint<4>)15 : (ap_uint<4>)match_length;
-            
-            if (match_len_ge_15) {
-                match_length -= 15;
-                extra_match_len = true;
-            } else {
-                match_length = 0;
-                extra_match_len = false;
+            case WRITE_LIT_LEN: {
+                bool lit_len_ge_255 = (lit_length >= 255);
+                outValue = lit_len_ge_255 ? (ap_uint<8>)255 : (ap_uint<8>)lit_length;
+                if (lit_len_ge_255) {
+                    lit_length -= 255;
+                } else {
+                    next_state = WRITE_LITERAL;
+                    readOffsetFlag_next = false;
+                }
+                break;
             }
-            
-            // 预计算 offset+1
-            match_offset_plus_one = match_offset + 1;
-            
-        } else if (next_state == WRITE_LIT_LEN) {
-            bool lit_len_ge_255 = (lit_length >= 255);
-            outValue = lit_len_ge_255 ? (ap_uint<8>)255 : (ap_uint<8>)lit_length;
-            
-            if (lit_len_ge_255) {
-                lit_length -= 255;
-            } else {
-                next_state = WRITE_LITERAL;
-                readOffsetFlag = false;
+            case WRITE_LITERAL: {
+                outValue = in_lit_inStream.read();
+                write_lit_length--;
+                if (write_lit_length == 0) {
+                    next_state = lit_ending ? WRITE_TOKEN : WRITE_OFFSET0;
+                    readOffsetFlag_next = lit_ending;
+                }
+                break;
             }
-            
-        } else if (next_state == WRITE_LITERAL) {
-            outValue = in_lit_inStream.read();
-            write_lit_length--;
-            
-            if (write_lit_length == 0) {
-                next_state = lit_ending ? WRITE_TOKEN : WRITE_OFFSET0;
-                readOffsetFlag = lit_ending;
+            case WRITE_OFFSET0: {
+                outValue = match_offset_plus_one.range(7, 0);
+                next_state = WRITE_OFFSET1;
+                readOffsetFlag_next = false;
+                break;
             }
-            
-        } else if (next_state == WRITE_OFFSET0) {
-            // 使用预计算的值
-            outValue = match_offset_plus_one.range(7, 0);
-            next_state = WRITE_OFFSET1;
-            readOffsetFlag = false;
-            
-        } else if (next_state == WRITE_OFFSET1) {
-            outValue = match_offset_plus_one.range(15, 8);
-            next_state = extra_match_len ? WRITE_MATCH_LEN : WRITE_TOKEN;
-            readOffsetFlag = !extra_match_len;
-            
-        } else if (next_state == WRITE_MATCH_LEN) {
-            bool match_len_ge_255 = (match_length >= 255);
-            outValue = match_len_ge_255 ? (ap_uint<8>)255 : (ap_uint<8>)match_length;
-            
-            if (match_len_ge_255) {
-                match_length -= 255;
-            } else {
-                next_state = WRITE_TOKEN;
-                readOffsetFlag = true;
+            case WRITE_OFFSET1: {
+                outValue = match_offset_plus_one.range(15, 8);
+                next_state = extra_match_len ? WRITE_MATCH_LEN : WRITE_TOKEN;
+                readOffsetFlag_next = !extra_match_len;
+                break;
+            }
+            case WRITE_MATCH_LEN: {
+                bool match_len_ge_255 = (match_length >= 255);
+                outValue = match_len_ge_255 ? (ap_uint<8>)255 : (ap_uint<8>)match_length;
+                if (match_len_ge_255) {
+                    match_length -= 255;
+                } else {
+                    next_state = WRITE_TOKEN;
+                    readOffsetFlag_next = true;
+                }
+                break;
             }
         }
         
@@ -250,6 +269,11 @@ lz4_compress:
             endOfStream << 0;
             compressedSize++;
         }
+
+        // 统一在本拍末尾更新标志位，减少 PHI/MUX 深度
+        readOffsetFlag = readOffsetFlag_next;
+        pending_idx_apply = pending_idx_apply_next;
+        pending_idx_increment = pending_idx_increment_next;
     }
 
     compressdSizeStream << compressedSize;
@@ -291,9 +315,10 @@ static void lz4Compress(hls::stream<ap_uint<32> >& inStream,
     hls::stream<uint8_t> lit_outStream("lit_outStream");
     hls::stream<ap_uint<64> > lenOffset_Stream("lenOffset_Stream");
 
-#pragma HLS STREAM variable = lit_outStream depth = MAX_LIT_COUNT
-#pragma HLS STREAM variable = lenOffset_Stream depth = c_gmemBurstSize
+#pragma HLS STREAM variable = lit_outStream depth = 512
+#pragma HLS STREAM variable = lenOffset_Stream depth = 256
 
+#pragma HLS BIND_STORAGE variable = lit_outStream type = FIFO impl = BRAM
 #pragma HLS BIND_STORAGE variable = lenOffset_Stream type = FIFO impl = SRL
 
 #pragma HLS dataflow
@@ -323,12 +348,12 @@ void hlsLz4Core(hls::stream<data_t>& inStream,
     hls::stream<ap_uint<32> > compressdStream("compressdStream");
     hls::stream<ap_uint<32> > bestMatchStream("bestMatchStream");
     hls::stream<ap_uint<32> > boosterStream("boosterStream");
-#pragma HLS STREAM variable = compressdStream depth = 8
-#pragma HLS STREAM variable = bestMatchStream depth = 8
-#pragma HLS STREAM variable = boosterStream depth = 8
+#pragma HLS STREAM variable = compressdStream depth = 32
+#pragma HLS STREAM variable = bestMatchStream depth = 32
+#pragma HLS STREAM variable = boosterStream depth = 32
 
-#pragma HLS BIND_STORAGE variable = compressdStream type = FIFO impl = SRL
-#pragma HLS BIND_STORAGE variable = boosterStream type = FIFO impl = SRL
+#pragma HLS BIND_STORAGE variable = compressdStream type = FIFO impl = BRAM
+#pragma HLS BIND_STORAGE variable = boosterStream type = FIFO impl = BRAM
 
 #pragma HLS dataflow
     xf::compression::lzCompress<M_LEN, MIN_MAT, LZ_MAX_OFFSET_LIM>(inStream, compressdStream, input_size);
@@ -359,13 +384,13 @@ void hlsLz4(const data_t* in,
     hls::stream<ap_uint<8> > inStream[NUM_BLOCK];
     hls::stream<bool> outStreamEos[NUM_BLOCK];
     hls::stream<ap_uint<8> > outStream[NUM_BLOCK];
-#pragma HLS STREAM variable = outStreamEos depth = 2
-#pragma HLS STREAM variable = inStream depth = c_gmemBurstSize
-#pragma HLS STREAM variable = outStream depth = c_gmemBurstSize
+#pragma HLS STREAM variable = outStreamEos depth = 4
+#pragma HLS STREAM variable = inStream depth = (c_gmemBurstSize * 4)
+#pragma HLS STREAM variable = outStream depth = (c_gmemBurstSize * 4)
 
 #pragma HLS BIND_STORAGE variable = outStreamEos type = FIFO impl = SRL
-#pragma HLS BIND_STORAGE variable = inStream type = FIFO impl = SRL
-#pragma HLS BIND_STORAGE variable = outStream type = FIFO impl = SRL
+#pragma HLS BIND_STORAGE variable = inStream type = FIFO impl = BRAM
+#pragma HLS BIND_STORAGE variable = outStream type = FIFO impl = BRAM
 
     hls::stream<uint32_t> compressedSize[NUM_BLOCK];
 

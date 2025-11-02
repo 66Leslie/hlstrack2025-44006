@@ -99,7 +99,6 @@ LOOP_SHA256_GENENERATE_MAIN:
 
     LOOP_SHA256_GEN_FULL_BLKS:
         for (uint64_t j = 0; j < uint64_t(len >> 6); ++j) {
-#pragma HLS pipeline II = 16
 #pragma HLS loop_tripcount min = 0 max = 1
             /// message block.
             SHA256Block b0;
@@ -107,7 +106,7 @@ LOOP_SHA256_GENENERATE_MAIN:
         // this block will hold 64 byte of message.
         LOOP_SHA256_GEN_ONE_FULL_BLK:
             for (int i = 0; i < 16; ++i) {
-#pragma HLS unroll
+#pragma HLS pipeline II = 1 rewind
                 uint32_t l = msg_strm.read();
                 // XXX algorithm assumes big-endian.
                 l = ((0x000000ffUL & l) << 24) | ((0x0000ff00UL & l) << 8) | ((0x00ff0000UL & l) >> 8) |
@@ -158,7 +157,7 @@ LOOP_SHA256_GENENERATE_MAIN:
 
         LOOP_SHA256_GEN_COPY_TAIL_AND_ONE:
             for (int i = 0; i < 14; ++i) {
-#pragma HLS pipeline
+#pragma HLS pipeline II = 1 rewind
                 if (i < (left >> 2)) {
                     uint32_t l = msg_strm.read();
                     // pad 1 byte not in this word
@@ -303,7 +302,6 @@ LOOP_SHA256_GENENERATE_MAIN:
 
     LOOP_SHA256_GEN_FULL_BLKS:
         for (uint64_t j = 0; j < uint64_t(len >> 6); ++j) {
-#pragma HLS pipeline II = 16
 #pragma HLS loop_tripcount min = 0 max = 1
             /// message block.
             SHA256Block b0;
@@ -312,7 +310,7 @@ LOOP_SHA256_GENENERATE_MAIN:
         // this block will hold 64 byte of message.
         LOOP_SHA256_GEN_ONE_FULL_BLK:
             for (int i = 0; i < 16; i += 2) {
-#pragma HLS unroll
+#pragma HLS pipeline II = 1 rewind
                 uint64_t ll = msg_strm.read().to_uint64();
                 // low
                 uint32_t l = ll & 0xffffffffUL;
@@ -373,7 +371,7 @@ LOOP_SHA256_GENENERATE_MAIN:
 
         LOOP_SHA256_GEN_COPY_TAIL_PAD_ONE:
             for (int i = 0; i < ((left < 56) ? 7 : 8); ++i) {
-#pragma HLS pipeline
+#pragma HLS pipeline II = 1 rewind
                 if (i < (left >> 3)) {
                     // pad 1 not in this 64b word, and need to copy
                     uint64_t ll = msg_strm.read().to_uint64();
@@ -501,23 +499,52 @@ inline void dup_strm(hls::stream<uint64_t>& in_strm,
                      hls::stream<bool>& out1_e_strm,
                      hls::stream<uint64_t>& out2_strm,
                      hls::stream<bool>& out2_e_strm) {
-    bool e = in_e_strm.read();
+#pragma HLS INLINE off
+#pragma HLS DATAFLOW
+    hls::stream<uint64_t> mid_v("dup_mid_v");
+#pragma HLS STREAM variable = mid_v depth = 8
+    hls::stream<bool> mid_e("dup_mid_e");
+#pragma HLS STREAM variable = mid_e depth = 8
 
-    while (!e) {
+    // Stage 1: read end flag first, forward data only when not end
+    {
+        bool done = false;
+        do {
 #pragma HLS loop_tripcount min = 1 max = 1 avg = 1
-#pragma HLS pipeline II = 1
-        uint64_t in_r = in_strm.read();
-
-        out1_strm.write(in_r);
-        out1_e_strm.write(false);
-        out2_strm.write(in_r);
-        out2_e_strm.write(false);
-
-        e = in_e_strm.read();
+#pragma HLS pipeline II = 1 rewind
+            bool e = in_e_strm.read();
+            mid_e.write(e);
+            if (e) {
+                done = true;
+            } else {
+                uint64_t v = in_strm.read();
+                mid_v.write(v);
+            }
+        } while (!done);
     }
 
-    out1_e_strm.write(true);
-    out2_e_strm.write(true);
+    // Stage 2: duplicate values and end flags to two outputs
+    {
+        while (true) {
+#pragma HLS pipeline II = 1 rewind
+            bool e = mid_e.read();
+            if (e) break;
+            uint64_t v = mid_v.read();
+            out1_strm.write(v);
+            out2_strm.write(v);
+            out1_e_strm.write(false);
+            out2_e_strm.write(false);
+        }
+        out1_e_strm.write(true);
+        out2_e_strm.write(true);
+    }
+}
+
+
+// 轻量写入包装：通过函数边界形成阶段隔离，减少HLS对写口前组合路径的保守估计
+inline void write_w_to_fifo(hls::stream<uint32_t>& w_strm, uint32_t v) {
+#pragma HLS inline
+    w_strm.write(v);
 }
 
 inline void generateMsgSchedule(hls::stream<SHA256Block>& blk_strm,
@@ -537,25 +564,49 @@ inline void generateMsgSchedule(hls::stream<SHA256Block>& blk_strm,
             uint32_t W[16];
 #pragma HLS array_partition variable = W complete
 
+        // Seed first 16 words and emit sequentially (1 word per cycle)
         LOOP_SHA256_PREPARE_WT16:
             for (short t = 0; t < 16; ++t) {
-#pragma HLS pipeline II = 1
-                uint32_t Wt = blk.M[t];
-                W[t] = Wt;
-                w_strm.write(Wt);
+#pragma HLS pipeline II = 1 rewind
+                uint32_t w0 = blk.M[t];
+                W[t] = w0;
+                write_w_to_fifo(w_strm, w0);
             }
 
+        // Extend words using a 16-stage shift register to avoid dynamic indexing muxes
         LOOP_SHA256_PREPARE_WT64:
-            for (short t = 16; t < 64; ++t) {
-#pragma HLS pipeline II = 1
-                // uint32_t Wt = SSIG1(W[t - 2]) + W[t - 7] + SSIG0(W[t - 15]) + W[t - 16];
-                // W[t] = Wt;
-                uint32_t Wt = SSIG1(W[14]) + W[9] + SSIG0(W[1]) + W[0];
-                for (unsigned char j = 0; j < 15; ++j) {
-                    W[j] = W[j + 1];
+            {
+                for (short t = 16; t < 64; ++t) {
+#pragma HLS pipeline II = 1 rewind
+#pragma HLS DEPENDENCE variable = W inter false
+                    // Compute next word from fixed indices: W[14], W[9], W[1], W[0]
+                    // pairwise XOR version of SSIG to reduce fan-in depth
+                    uint32_t w14_r17 = ROTR(17, W[14]);
+                    uint32_t w14_r19 = ROTR(19, W[14]);
+                    uint32_t w14_s10 = (W[14] >> 10);
+                    uint32_t s1v_x = w14_r17 ^ w14_r19;
+                    uint32_t s1v = s1v_x ^ w14_s10;
+                    uint32_t w1_r7 = ROTR(7, W[1]);
+                    uint32_t w1_r18 = ROTR(18, W[1]);
+                    uint32_t w1_s3 = (W[1] >> 3);
+                    uint32_t s0v_x = w1_r7 ^ w1_r18;
+                    uint32_t s0v = s0v_x ^ w1_s3;
+                    // balance addition: (s1v + W9) + (s0v + W0)
+                    uint32_t tA = s1v + W[9];
+#pragma HLS bind_op variable=tA op=add impl=fabric
+                    uint32_t tB = s0v + W[0];
+#pragma HLS bind_op variable=tB op=add impl=fabric
+                    uint32_t wt = tA + tB;
+#pragma HLS bind_op variable=wt op=add impl=fabric
+
+                    // Shift window and insert new word
+                    for (int i = 0; i < 15; ++i) {
+#pragma HLS UNROLL
+                        W[i] = W[i + 1];
+                    }
+                    W[15] = wt;
+                    write_w_to_fifo(w_strm, wt);
                 }
-                W[15] = Wt;
-                w_strm.write(Wt);
             }
         }
         e = end_nblk_strm.read();
@@ -600,6 +651,74 @@ inline void sha256_iter(uint32_t& a,
     Kt = K[(t + 1) & 63];
 }
 
+// Value-driven variant for superscalar rounds
+inline void sha256_iter_val(uint32_t& a,
+                            uint32_t& b,
+                            uint32_t& c,
+                            uint32_t& d,
+                            uint32_t& e,
+                            uint32_t& f,
+                            uint32_t& g,
+                            uint32_t& h,
+                            uint32_t Wt,
+                            uint32_t Kt) {
+#pragma HLS INLINE off
+    // create local read-only copies to reduce fan-out on live state
+    const uint32_t a_v = a;
+    const uint32_t b_v = b;
+    const uint32_t c_v = c;
+    const uint32_t d_v = d;
+    const uint32_t e_v = e;
+    const uint32_t f_v = f;
+    const uint32_t g_v = g;
+    const uint32_t h_v = h;
+    const uint32_t Wt_v = Wt;
+    const uint32_t Kt_v = Kt;
+    // compute rotates with smaller fan-in groups
+    uint32_t e_r6 = ROTR(6, e_v);
+    uint32_t e_r11 = ROTR(11, e_v);
+    uint32_t e_r25 = ROTR(25, e_v);
+    // pairwise XOR to encourage balanced mapping
+    uint32_t e_x = e_r6 ^ e_r25;
+    uint32_t s1 = e_x ^ e_r11;
+
+    uint32_t a_r2 = ROTR(2, a_v);
+    uint32_t a_r13 = ROTR(13, a_v);
+    uint32_t a_r22 = ROTR(22, a_v);
+    uint32_t a_x = a_r2 ^ a_r22;
+    uint32_t s0 = a_x ^ a_r13;
+    // Reduced-depth boolean forms
+    // ch = g ^ (e & (f ^ g))
+    uint32_t fg_x = f_v ^ g_v;
+    uint32_t ch = g_v ^ (e_v & fg_x);
+    // maj = (a & (b ^ c)) ^ (b & c)
+    uint32_t bc_x = b_v ^ c_v;
+    uint32_t maj = (a_v & bc_x) ^ (b_v & c_v);
+    // Balanced addition for T1 with alternative association: (h+Wt+s1) + (Kt+ch)
+    uint32_t t1_a = h_v + Wt_v;
+#pragma HLS bind_op variable=t1_a op=add impl=fabric
+    uint32_t t1_b = Kt_v + ch;
+#pragma HLS bind_op variable=t1_b op=add impl=fabric
+    uint32_t t1_bs = t1_b + s1;
+#pragma HLS bind_op variable=t1_bs op=add impl=fabric
+    uint32_t T1 = t1_a + t1_bs;
+#pragma HLS bind_op variable=T1 op=add impl=fabric
+    // T2 uses a balanced single add of s0 + maj
+    uint32_t T2 = s0 + maj;
+#pragma HLS bind_op variable=T2 op=add impl=fabric
+
+    h = g;
+    g = f;
+    f = e;
+#pragma HLS bind_op variable=e op=add impl=fabric
+    e = d_v + T1;
+    d = c;
+    c = b;
+    b = a_v;
+#pragma HLS bind_op variable=a op=add impl=fabric
+    a = T1 + T2;
+}
+
 /// @brief Digest message blocks and emit final hash.
 /// @tparam h_width the hash width(type).
 /// @param nblk_strm number of message block.
@@ -626,7 +745,7 @@ void sha256Digest(hls::stream<uint64_t>& nblk_strm,
         0xa2bfe8a1UL, 0xa81a664bUL, 0xc24b8b70UL, 0xc76c51a3UL, 0xd192e819UL, 0xd6990624UL, 0xf40e3585UL, 0x106aa070UL,
         0x19a4c116UL, 0x1e376c08UL, 0x2748774cUL, 0x34b0bcb5UL, 0x391c0cb3UL, 0x4ed8aa4aUL, 0x5b9cca4fUL, 0x682e6ff3UL,
         0x748f82eeUL, 0x78a5636fUL, 0x84c87814UL, 0x8cc70208UL, 0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL};
-#pragma HLS array_partition variable = K complete
+#pragma HLS bind_storage variable = K type = rom_1p impl = lutram
 
 LOOP_SHA256_DIGEST_MAIN:
     for (bool end_flag = end_nblk_strm.read(); !end_flag; end_flag = end_nblk_strm.read()) {
@@ -676,13 +795,17 @@ LOOP_SHA256_DIGEST_MAIN:
             f = H[5];
             g = H[6];
             h = H[7];
-
+            /* K constants local */
             uint32_t Kt = K[0];
         LOOP_SHA256_UPDATE_64_ROUNDS:
-            for (short t = 0; t < 64; ++t) {
-#pragma HLS pipeline II = 1
-                sha256_iter(a, b, c, d, e, f, g, h, w_strm, Kt, K, t);
-            } // 64 round loop
+            {
+                for (short t = 0; t < 64; ++t) {
+#pragma HLS pipeline II = 1 rewind
+                    uint32_t wt = w_strm.read();
+                    sha256_iter_val(a, b, c, d, e, f, g, h, wt, Kt);
+                    Kt = K[(t + 1) & 63];
+                }
+            }
 
             // store working variables to internal states.
             H[0] = a + H[0];
@@ -752,45 +875,50 @@ inline void sha256_top(hls::stream<ap_uint<m_width> >& msg_strm,
 #pragma HLS DATAFLOW
     /// 512-bit Block stream
     hls::stream<SHA256Block> blk_strm("blk_strm");
-#pragma HLS STREAM variable = blk_strm depth = 32
-#pragma HLS RESOURCE variable = blk_strm core = FIFO_LUTRAM
+#pragma HLS STREAM variable = blk_strm depth = 128
+    // 使用BRAM以保持更高的吞吐容量
+#pragma HLS RESOURCE variable = blk_strm core = FIFO_BRAM
 
     /// number of Blocks, send per msg
     hls::stream<uint64_t> nblk_strm("nblk_strm");
-#pragma HLS STREAM variable = nblk_strm depth = 32
+#pragma HLS STREAM variable = nblk_strm depth = 64
 #pragma HLS RESOURCE variable = nblk_strm core = FIFO_LUTRAM
     hls::stream<uint64_t> nblk_strm1("nblk_strm1");
-#pragma HLS STREAM variable = nblk_strm1 depth = 32
+#pragma HLS STREAM variable = nblk_strm1 depth = 64
 #pragma HLS RESOURCE variable = nblk_strm1 core = FIFO_LUTRAM
     hls::stream<uint64_t> nblk_strm2("nblk_strm2");
-#pragma HLS STREAM variable = nblk_strm2 depth = 32
+#pragma HLS STREAM variable = nblk_strm2 depth = 64
 #pragma HLS RESOURCE variable = nblk_strm2 core = FIFO_LUTRAM
 
     /// end flag, send per msg.
     hls::stream<bool> end_nblk_strm("end_nblk_strm");
-#pragma HLS STREAM variable = end_nblk_strm depth = 32
+#pragma HLS STREAM variable = end_nblk_strm depth = 64
 #pragma HLS RESOURCE variable = end_nblk_strm core = FIFO_LUTRAM
     hls::stream<bool> end_nblk_strm1("end_nblk_strm1");
-#pragma HLS STREAM variable = end_nblk_strm1 depth = 32
+#pragma HLS STREAM variable = end_nblk_strm1 depth = 64
 #pragma HLS RESOURCE variable = end_nblk_strm1 core = FIFO_LUTRAM
     hls::stream<bool> end_nblk_strm2("end_nblk_strm2");
-#pragma HLS STREAM variable = end_nblk_strm2 depth = 32
+#pragma HLS STREAM variable = end_nblk_strm2 depth = 64
 #pragma HLS RESOURCE variable = end_nblk_strm2 core = FIFO_LUTRAM
 
-    /// W, 64 items for each block
+    /// W & K, 64 items per block, 1-per-cycle
     hls::stream<uint32_t> w_strm("w_strm");
-#pragma HLS STREAM variable = w_strm depth = 32
+#pragma HLS STREAM variable = w_strm depth = 160
+    // 使用BRAM作为跨模块深缓冲，保持II=1稳健
 #pragma HLS RESOURCE variable = w_strm core = FIFO_LUTRAM
+
 
     // Generate block stream
     preProcessing(msg_strm, len_strm, end_len_strm, //
                   blk_strm, nblk_strm, end_nblk_strm);
 
-    // Duplicate number of block stream and its end flag stream
+    // Duplicate number of block stream and its end flag stream (cascade to get 3 copies)
     dup_strm(nblk_strm, end_nblk_strm, nblk_strm1, end_nblk_strm1, nblk_strm2, end_nblk_strm2);
 
     // Generate the message schedule in stream
     generateMsgSchedule(blk_strm, nblk_strm1, end_nblk_strm1, w_strm);
+    // Generate the K schedule in stream
+
 
     // Digest block stream, and write hash stream.
     // fully pipelined version will calculate SHA-224 if hash_strm width is 224.

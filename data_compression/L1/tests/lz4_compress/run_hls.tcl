@@ -27,7 +27,7 @@ set PROJ "lz4_compress_test.prj"
 set SOLN "sol1"
 
 if {![info exists CLKP]} {
-  set CLKP 15.0
+  set CLKP 10.0
 }
 
 open_project -reset $PROJ
